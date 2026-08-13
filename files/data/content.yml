@@ -1,0 +1,79 @@
+navigation:
+  - key: home
+    href: index.html
+    label: Home
+  - key: people
+    href: people.html
+    label: People
+  # - key: research
+  #   href: research.html
+  #   label: Research
+  - key: publications
+    href: publications.html
+    label: Publications
+  - key: news
+    href: news.html
+    label: News
+  # - key: join
+  #   href: join.html
+  #   label: Join us
+
+meta:
+  keywords: quantum information, quantum algorithms, quantum computing, Oxford, research group
+
+home:
+  hero:
+    title_line: Quantum Information at Oxford
+    description: We develop quantum algorithms, learning theory, and mathematical tools for useful quantum technologies.
+    primary_label: Explore research
+    secondary_label: Meet the group
+    image_alt: Research group working together
+  publications:
+    title: Recent publications
+    link_label: View all publications
+research:
+  title: Research areas
+  description: We study the theory and practice of quantum information across four connected themes.
+  read_more: Learn more
+  image_alt: Group discussion
+
+people:
+  section_title: People
+  note_fallback: A growing community working across quantum information.
+  alumni_label: Past members
+
+publications:
+  filters:
+    - filter: "*"
+      label: All
+    - filter: ".filter-publication"
+      label: Publications
+    - filter: ".filter-preprint"
+      label: Preprints
+  type_labels:
+    ARTICLE: Journal article
+    INPROCEEDINGS: Conference paper
+    MISC: Preprint
+    DEFAULT: Publication
+  missing_title: Untitled publication
+  missing_authors: Authors not listed
+  action_labels:
+    abstract: Abstract
+    bibtex: BibTeX
+    link: Paper
+news:
+  category_labels:
+    paper: Publication
+    talk: Talk
+    update: Update
+    visit: Visit
+    arxiv: Preprint
+  default_category: Group news
+
+join:
+  intro_title: Work with the group
+  intro_fallback: We welcome prospective students, visitors, and collaborators interested in quantum information.
+  location_label: Where we are
+  audience_label: Who should write
+  audience_text: Prospective students, visitors, and collaborators.
+  email_label: Email us

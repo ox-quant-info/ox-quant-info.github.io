@@ -1,0 +1,15 @@
+- id: algorithms
+  icon: fa-solid fa-microchip
+  title: Quantum algorithms
+  summary: Designing algorithms that turn quantum structure into measurable computational advantage.
+  detail: We study algorithms for search, estimation, simulation, optimization, and linear algebra, with an emphasis on rigorous guarantees and realistic resource costs.
+- id: applications
+  icon: fa-solid fa-arrow-trend-up
+  title: Quantum applications
+  summary: Connecting quantum information to finance, scientific computing, and optimization.
+  detail: We develop quantum methods for problems with direct scientific and economic relevance, while keeping a close eye on classical baselines and near-term implementations.
+- id: foundations
+  icon: fa-solid fa-bezier-curve
+  title: Foundations and complexity
+  summary: Mapping the limits of quantum computation and quantum advantage.
+  detail: We use complexity theory, mathematical physics, and statistical reasoning to understand which quantum tasks are hard, learnable, or genuinely enhanced by quantum resources.

@@ -1,0 +1,25 @@
+---
+- headline: >
+    "[Eigenstate preparation through near-optimal eigenprobability filtering](https://arxiv.org/abs/2606.06316)" released on arXiv.
+  category: arxiv
+  date: 2026-08-12
+- headline: >
+    "[Fullqubit alchemist: Quantum algorithm for alchemical free energy calculations](https://www.nature.com/articles/s41534-026-01275-2)" accepted at npj Quantum Information.
+  category: paper
+  date: 2026-05-12
+- headline:  >
+    "[Low-depth amplitude estimation via statistical eigengap estimation](https://arxiv.org/abs/2603.05475)" released on arXiv.
+  category: arxiv
+  date: 2026-03-05
+- headline:  >
+    "[Fullqubit alchemist: Quantum algorithm for alchemical free energy calculations](https://arxiv.org/abs/2508.16719)" showcased on the [Mathematical Institute website](https://www.maths.ox.ac.uk/node/80538).
+  category: update
+  date: 2026-02-28
+- headline:  >
+    "[Fullqubit alchemist: Quantum algorithm for alchemical free energy calculations](https://arxiv.org/abs/2508.16719)" accepted at QCTiP 2026 as regular talk.
+  category: talk
+  date: 2026-02-20
+- headline:  >
+    "[Fullqubit alchemist: Quantum algorithm for alchemical free energy calculations](https://arxiv.org/abs/2508.16719)" released on arXiv.
+  category: arxiv
+  date: 2025-08-26

@@ -1,0 +1,17 @@
+---
+name: Bálint Koczor
+image: files/images/people/balint.webp
+role: Associate Professor in Quantum Information Theory
+bio: |
+  I have broad research interests in quantum computing and quantum information theory, and my research aims to tackle the central question in the field that “how can we achieve a robust quantum advantage”. I co-founded the conference series Seeking Quantum Advantage (SEEQA) to provide a platform for the community to evaluate and accelerate progress around this question.
+
+  I lead the Quantum Information, Computation and Cryptography group and we work on a broad spectrum of problems in quantum computing, from applications and algorithms through to quantum error correction. We work with experimentalists and with quantum companies to develop optimised platforms to best tailor quantum applications to hardware. This includes developing new and improved ways to deal with errors (error correction and mitigation techniques) in quantum computers while we also use classical supercomputers to squeeze out as much performance from quantum computers as possible. I also work closely with the London-based scale up Quantum Motion Technologies as a Lead Quantum Theorist.
+  
+  My Erdős number is 4.
+links:
+  - icon: fa-solid fa-building-columns
+    href: https://www.maths.ox.ac.uk/people/balint.koczor
+  - icon: fa-solid fa-atom
+    href: https://appliedqc.org/
+  - icon: fa-orcid
+    href: https://orcid.org/0000-0002-4319-6870

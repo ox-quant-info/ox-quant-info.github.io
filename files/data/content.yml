@@ -11,9 +11,9 @@ navigation:
   - key: publications
     href: publications.html
     label: Publications
-  - key: news
-    href: news.html
-    label: News
+  # - key: news
+  #   href: news.html
+  #   label: News
   # - key: join
   #   href: join.html
   #   label: Join us

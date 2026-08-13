@@ -22,15 +22,15 @@ const PAGES = [
 ];
 
 const PAGE_IMAGES = {
-  landing: 'files/images/background/landing.webp',
+  landing: 'files/images/background/landing.png',
   research: 'files/images/background/research.webp',
   publications: 'files/images/background/publications.jpg',
-  people: 'files/images/background/group.jpg',
+  people: 'files/images/background/people.jpg',
   news: 'files/images/background/news.jpg',
   join: 'files/images/background/join.jpg',
 };
 
-const ICON_COLORS = ['#f57813', '#15a04a', '#d90769', '#15bfbc', '#f5cf13', '#1335f5'];
+const ICON_COLORS = ['#002147', '#2b6d9e', '#356b91', '#5289a8', '#72a3bd', '#94bad0'];
 function escapeHtml(value) {
   return String(value ?? '')
     .replaceAll('&', '&amp;')
@@ -302,6 +302,7 @@ function peopleData() {
     pi: readYAML('pi.yml', {}),
     main: readYAML('main_members.yml', {}),
     other: readYAML('other_members.yml', {}),
+    altNames: readYAML('alt_names.yml', []),
   };
 }
 
@@ -310,6 +311,7 @@ function memberNames(people) {
   if (people.pi?.name) names.push(people.pi.name);
   Object.values(people.main || {}).forEach(members => (members || []).forEach(member => names.push(member.name)));
   Object.values(people.other || {}).forEach(members => (members || []).forEach(member => names.push(member.name)));
+  if (Array.isArray(people.altNames)) names.push(...people.altNames);
   return new Set(names.filter(Boolean).map(name => normalizeText(name).toLowerCase()));
 }
 

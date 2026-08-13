@@ -4,10 +4,16 @@
 <head>
   <meta charset="utf-8">
   <meta content="width=device-width, initial-scale=1.0" name="viewport">
-  <meta name="theme-color" content="#17283b">
+  <meta name="theme-color" content="#002147">
   <title>Page not found - Oxford Quantum Information Group</title>
   <meta name="description" content="The requested page could not be found.">
-  <base href="/">
+  <script>
+    if (window.location.protocol !== 'file:') {
+      const base = document.createElement('base');
+      base.href = '/';
+      document.head.appendChild(base);
+    }
+  </script>
 
   <link href="files/images/favicons/favicon-96x96.png" rel="icon">
   <link href="files/images/favicons/apple-touch-icon.png" rel="apple-touch-icon">
@@ -23,11 +29,12 @@
 <body class="error-page">
   <div class="maintenance-shell">
     <header class="maintenance-header">
-      <div class="container">
+      <div class="container d-flex align-items-center justify-content-between">
         <a class="maintenance-brand" href="index.html" aria-label="Oxford Quantum Information Group home">
           <i class="fa-solid fa-atom" aria-hidden="true"></i>
           <span data-site-short-title>OxQInfo</span>
         </a>
+        <p class="maintenance-status"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i>Page not found</p>
       </div>
     </header>
 

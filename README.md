@@ -120,7 +120,7 @@ Each research item uses:
 
 Icons use Font Awesome classes. The `id` is also used for research anchors.
 
-### People: `files/data/pi.yml`, `main_members.yml`, and `other_members.yml`
+### People: `files/data/pi.yml`, `main_members.yml`, `other_members.yml`, and `alt_names.yml`
 
 The principal investigator record supports `name`, `image`, `role`, `bio` (or `introduction`), and `links`:
 
@@ -160,6 +160,15 @@ icon: fa-solid fa-building-columns
 icon: fa-solid fa-globe
 ```
 
+Use `alt_names.yml` for author-name variants that should still be recognized as group members in the publication list. It is a YAML list of display-name forms, such as:
+
+```yaml
+- Joshua W. Dai
+- Matthew L. Goh
+```
+
+These names are used only for matching and author emphasis; they do not create additional people cards.
+
 ### News: `files/data/news.yml`
 
 News entries are sorted newest first using `date`:
@@ -195,7 +204,7 @@ Commonly used fields are:
 }
 ```
 
-The displayed title is normalized to title case while preserving words that are intentionally all-capitalized. Authors matching people in the people YAML are emphasized automatically. The paper link is chosen in this order: arXiv `eprint`, `url`, then `doi`.
+The displayed title is normalized to title case while preserving words that are intentionally all-capitalized. Authors matching people in the people YAML or names in `alt_names.yml` are emphasized automatically. The paper link is chosen in this order: arXiv `eprint`, `url`, then `doi`.
 
 The publication page has one list with two filters:
 
@@ -243,6 +252,8 @@ The root pages are the Nova-compatible page backbones:
 Edit these files when the structure or Nova layout needs to change. Leave empty data slots in place for `build.js` to fill. A new page requires a root HTML template plus a corresponding entry in `PAGES` and renderer logic in `build.js`; adding a navigation item alone does not create a page.
 
 Use `assets/css/main.css` for site-specific styling and `assets/js/main.js` for browser behavior. The site primarily uses Font Awesome rather than Bootstrap Icons. Use `fa-solid`, `fa-regular`, or `fa-brands` classes consistently.
+
+The palette is anchored by Oxford blue (`#002147`) and uses coordinated medium, light, and pale variants for links, buttons, section surfaces, maintenance pages, and research icons. Update the Oxford-blue variables in `assets/css/main.css` if the group palette changes.
 
 Image paths in data and templates should point to public paths such as `files/images/background/research.webp` or `files/images/people/example.webp`. Do not use obsolete `assets/img/` paths.
 

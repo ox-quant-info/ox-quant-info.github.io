@@ -11,7 +11,5 @@ bio: |
 links:
   - icon: fa-solid fa-building-columns
     href: https://www.maths.ox.ac.uk/people/balint.koczor
-  - icon: fa-solid fa-atom
-    href: https://appliedqc.org/
-  - icon: fa-orcid
+  - icon: fa-brand fa-orcid
     href: https://orcid.org/0000-0002-4319-6870

@@ -9,11 +9,17 @@
 }
 
 /* Global Colors - The following color variables are used throughout the website. Updating them here will change the color scheme of the entire website */
-:root { 
+:root {
+  --oxford-blue: #002147;
+  --oxford-blue-mid: #2b6d9e;
+  --oxford-blue-light: #8fb7d0;
+  --oxford-blue-pale: #edf5fa;
+  --image-overlay-color: rgba(18, 24, 30, 0.7);
+  --image-panel-color: rgba(18, 24, 30, 0.84);
   --background-color: #ffffff; /* Background color for the entire website, including individual sections */
   --default-color: #2b180d; /* Default color used for the majority of the text content across the entire website */
-  --heading-color: #1b2f45; /* Color for headings, subheadings and title throughout the website */
-  --accent-color: #56b8e6; /* Accent color that represents your brand on the website. It's used for buttons, links, and other elements that need to stand out */
+  --heading-color: var(--oxford-blue); /* Color for headings, subheadings and title throughout the website */
+  --accent-color: var(--oxford-blue-mid); /* Accent color that represents your brand on the website. It's used for buttons, links, and other elements that need to stand out */
   --surface-color: #ffffff; /* The surface color is used as a background of boxed elements within sections, such as cards, icon boxes, or other elements that require a visual separation from the global background. */
   --contrast-color: #ffffff; /* Contrast color for text, ensuring readability against backgrounds of accent, heading, or default colors. */
 }
@@ -24,23 +30,24 @@
   --nav-hover-color: #ffffff; /* Applied to main navmenu links when they are hovered over or active */
   --nav-mobile-background-color: #ffffff; /* Used as the background color for mobile navigation menu */
   --nav-dropdown-background-color: #ffffff; /* Used as the background color for dropdown items that appear when hovering over primary navigation items */
-  --nav-dropdown-color: #212529; /* Used for navigation links of the dropdown items in the navigation menu. */
-  --nav-dropdown-hover-color: #56b8e6; /* Similar to --nav-hover-color, this color is applied to dropdown navigation links when they are hovered over. */
+  --nav-dropdown-color: var(--default-color); /* Used for navigation links of the dropdown items in the navigation menu. */
+  --nav-dropdown-hover-color: var(--oxford-blue-mid); /* Similar to --nav-hover-color, this color is applied to dropdown navigation links when they are hovered over. */
 }
 
 /* Color Presets - These classes override global colors when applied to any section or element, providing reuse of the sam color scheme. */
 
 .light-background {
-  --background-color: #f6fcfe;
+  --background-color: var(--oxford-blue-pale);
   --surface-color: #ffffff;
 }
 
 .dark-background {
-  --background-color: #17283b;
+  --background-color: var(--oxford-blue);
   --default-color: #ffffff;
   --heading-color: #ffffff;
-  --surface-color: #254160;
-  --contrast-color: #ffffff;
+  --surface-color: #174b73;
+  --accent-color: var(--oxford-blue-light);
+  --contrast-color: var(--oxford-blue);
 }
 
 /* Smooth scroll */
@@ -114,7 +121,7 @@ h6 {
 /* Global Header on Scroll
 ------------------------------*/
 .scrolled .header {
-  --background-color: rgba(23, 40, 59, 0.9);
+  --background-color: rgba(0, 33, 71, 0.92);
 }
 
 /*--------------------------------------------------------------
@@ -566,7 +573,7 @@ h6 {
 
 .page-title:before {
   content: "";
-  background-color: color-mix(in srgb, var(--background-color), transparent 40%);
+  background-color: var(--image-overlay-color);
   position: absolute;
   inset: 0;
 }
@@ -674,7 +681,7 @@ section,
     position: absolute;
     content: "";
     width: 44%;
-    background-image: linear-gradient(180deg, color-mix(in srgb, var(--background-color), transparent 15%), color-mix(in srgb, var(--background-color), transparent 15%) 100%), linear-gradient(180deg, rgb(0, 0, 0), rgb(0, 0, 0) 100%);
+    background: var(--image-panel-color);
     top: 0;
     bottom: 0;
     z-index: 2;
@@ -684,7 +691,7 @@ section,
 .hero:before {
   position: absolute;
   content: "";
-  background: color-mix(in srgb, var(--background-color), transparent 40%);
+  background: var(--image-overlay-color);
   inset: 0;
   z-index: 2;
 }
@@ -739,7 +746,6 @@ section,
   color: var(--contrast-color);
   background: var(--accent-color);
   font-weight: 600;
-  letter-spacing: 1px;
   min-height: 52px;
   padding: 12px 22px;
   border-radius: 50px;
@@ -747,10 +753,9 @@ section,
 }
 
 .hero-actions .btn-get-started:hover {
-  background: color-mix(in srgb, var(--accent-color) 90%, white 15%);
+  background: color-mix(in srgb, var(--accent-color) 90%, white 70%);
 }
 
-.hero-actions .btn-get-started i,
 .hero-actions .btn-watch-video i {
   color: color-mix(in srgb, var(--default-color), transparent 50%);
   flex: 0 0 auto;
@@ -766,7 +771,7 @@ section,
 .hero-actions .btn-watch-video {
   font-size: 16px;
   transition: 0.5s;
-  color: var(--default-color);
+  color: color-mix(in srgb, var(--default-color), transparent 50%);
   font-weight: 600;
   min-height: 52px;
   padding: 12px 0;
@@ -1201,7 +1206,7 @@ section,
 .about .content .pi-role {
   margin: 0 0 20px;
   font-weight: 600;
-  color: var(--heading-color);
+  color: var(--accent-color);
 }
 
 .about .pi-image {
@@ -1672,28 +1677,68 @@ section,
 /*--------------------------------------------------------------
 # Team Section
 --------------------------------------------------------------*/
+.team .row.gy-4 {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  row-gap: 1.5rem;
+}
+
+.team .row.gy-4 > [class*="col-"] {
+  width: auto;
+  max-width: none;
+  min-width: 0;
+}
+
 .team .team-member {
   background-color: var(--surface-color);
   overflow: hidden;
   border-radius: 5px;
   box-shadow: 0px 2px 15px rgba(0, 0, 0, 0.1);
+  width: 100%;
   height: 100%;
 }
 
 .team .team-member .member-img {
   position: relative;
-  aspect-ratio: 1 / 1;
+  display: block;
+  width: 100%;
+  aspect-ratio: 4 / 4;
   background: color-mix(in srgb, var(--default-color), transparent 92%);
   overflow: hidden;
 }
 
 .team .team-member .member-img > img {
   display: block;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: center;
+  position: absolute;
+  inset: 0;
+  width: 100% !important;
+  max-width: none !important;
+  height: 100% !important;
+  max-height: none !important;
+  object-fit: cover !important;
+  object-position: center center;
 }
+
+@media (max-width: 767px) {
+  .team .row.gy-4 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* @media (max-width: 640px) {
+  .team .row.gy-4 {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .team .team-member {
+    height: auto;
+  }
+
+  .team .team-member .member-img,
+  .team .team-member .member-img > img {
+    width: 100%;
+  }
+} */
 
 .team .team-member .social {
   position: absolute;
@@ -2486,7 +2531,6 @@ section,
 }
 
 .publication-meta strong {
-  color: var(--heading-color);
   font-weight: 700;
 }
 
@@ -2754,10 +2798,12 @@ section,
 --------------------------------------------------------------*/
 .coming-soon-page,
 .error-page {
+  --accent-color: var(--oxford-blue-light);
+  --contrast-color: var(--oxford-blue);
   min-height: 100vh;
   color: #fff;
-  background-color: #17283b;
-  background-image: linear-gradient(115deg, rgba(23, 40, 59, 0.97), rgba(23, 40, 59, 0.72)), url("../../files/images/background/landing.webp");
+  background-color: var(--oxford-blue);
+  background-image: linear-gradient(115deg, rgba(0, 33, 71, 1), rgba(0, 33, 71, 0.1)), url("../../files/images/background/landing.png");
   background-position: center;
   background-size: cover;
   background-attachment: fixed;
@@ -2874,14 +2920,14 @@ section,
 
 .maintenance-button {
   padding: 13px 22px;
-  color: #fff;
+  color: var(--oxford-blue);
   background: var(--accent-color);
   border-radius: 50px;
 }
 
 .maintenance-button:hover,
 .maintenance-button:focus-visible {
-  color: #fff;
+  color: var(--oxford-blue);
   background: color-mix(in srgb, var(--accent-color), #000 12%);
 }
 
@@ -2915,6 +2961,8 @@ section,
 
 .error-page .maintenance-content {
   max-width: 680px;
+  margin-right: auto;
+  margin-left: auto;
 }
 
 .error-page .maintenance-copy {
@@ -2928,7 +2976,7 @@ section,
 
 .error-code {
   margin: 0 0 10px;
-  color: var(--accent-color);
+  color: var(--oxford-blue-pale);
   font-family: var(--heading-font);
   font-size: clamp(72px, 13vw, 150px);
   font-weight: 700;

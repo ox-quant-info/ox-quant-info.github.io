@@ -243,6 +243,16 @@ function monthToNumber(month) {
   return months[String(month ?? '').trim().toLowerCase()] || 0;
 }
 
+function publicationMonthLabel(month) {
+  const monthNumber = monthToNumber(month);
+  if (!monthNumber) return '';
+
+  return new Intl.DateTimeFormat('en-GB', {
+    month: 'short',
+    timeZone: 'UTC',
+  }).format(new Date(Date.UTC(2000, monthNumber - 1, 1)));
+}
+
 function publicationSortKey(tags) {
   return (Number.parseInt(tags.year, 10) || 0) * 100 + monthToNumber(tags.month);
 }
@@ -491,6 +501,10 @@ function publicationType(entryType, content) {
   return labels[entryType] || labels.DEFAULT || '';
 }
 
+function isThesisEntry(entryType) {
+  return ['PHDTHESIS', 'MASTERSTHESIS', 'BACHELORTHESIS', 'THESIS'].includes(entryType);
+}
+
 function publicationUrl(entry) {
   if (entry.tags.eprint) return `https://arxiv.org/abs/${entry.tags.eprint}`;
   if (entry.tags.url) return entry.tags.url;
@@ -558,6 +572,12 @@ function renderPublicationInfo(entry, content) {
   const tags = entry.tags;
   const parts = [];
 
+  if (isThesisEntry(entry.entryType)) {
+    const thesisLabel = escapeHtml(publicationType(entry.entryType, content));
+    const school = tags.school ? escapeHtml(normalizeText(tags.school)) : '';
+    parts.push(school ? `${thesisLabel}, ${school}` : thesisLabel);
+  }
+
   if (tags.journal) parts.push(escapeHtml(normalizeText(tags.journal)));
 
   if (tags.booktitle) {
@@ -591,7 +611,9 @@ function publicationAnchor(entry, index = 0) {
 }
 
 function renderPublicationRow(entry, people, content, auxData, index = 0, isotope = false) {
-  const filter = ['ARTICLE', 'INPROCEEDINGS'].includes(entry.entryType) ? 'publication' : 'preprint';
+  const filter = isThesisEntry(entry.entryType)
+    ? 'thesis'
+    : ['ARTICLE', 'INPROCEEDINGS'].includes(entry.entryType) ? 'publication' : 'preprint';
   const title = titleCasePublicationTitle(normalizeText(entry.tags.title || content?.publications?.missing_title || ''));
   const url = publicationUrl(entry);
   const auxEntry = auxiliaryPublication(auxData, entry.citationKey);
@@ -599,6 +621,7 @@ function renderPublicationRow(entry, people, content, auxData, index = 0, isotop
   const abstractId = `${anchor}-abstract`;
   const bibtexId = `${anchor}-bibtex`;
   const year = normalizeText(entry.tags.year || '');
+  const month = publicationMonthLabel(entry.tags.month);
   const authors = renderAuthors(entry.tags.author || '', people);
   const meta = renderPublicationInfo(entry, content);
   const wrapperClass = isotope ? `col-12 portfolio-item isotope-item filter-${filter}` : 'publication-list-item';
@@ -671,7 +694,10 @@ function renderPublicationRow(entry, people, content, auxData, index = 0, isotop
   return `
     <div id="${escapeAttr(anchor)}" class="${wrapperClass}">
       <article class="publication-row d-flex flex-column flex-md-row align-items-start gap-3">
-        <div class="publication-year flex-shrink-0">${escapeHtml(year)}</div>
+        <div class="publication-year flex-shrink-0">
+          <span class="publication-year-number">${escapeHtml(year)}</span>
+          ${month ? `<span class="publication-month">${escapeHtml(month)}</span>` : ''}
+        </div>
         <div class="publication-body flex-grow-1">
           <h3 class="publication-title">${url ? `<a href="${escapeAttr(url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(title)}</a>` : escapeHtml(title)}</h3>
           <p class="publication-authors">${authors || escapeHtml(missingAuthors)}</p>

@@ -50,10 +50,16 @@ publications:
       label: Publications
     - filter: ".filter-preprint"
       label: Preprints
+    - filter: ".filter-thesis"
+      label: Theses
   type_labels:
     ARTICLE: Journal article
     INPROCEEDINGS: Conference paper
     MISC: Preprint
+    PHDTHESIS: PhD thesis
+    MASTERSTHESIS: Master's thesis
+    BACHELORSTHESIS: Bachelor's thesis
+    THESIS: Thesis
     DEFAULT: Publication
   missing_title: Untitled publication
   missing_authors: Authors not listed

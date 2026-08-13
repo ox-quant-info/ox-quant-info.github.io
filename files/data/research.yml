@@ -1,15 +1,17 @@
 - id: algorithms
-  icon: fa-solid fa-microchip
-  title: Quantum algorithms
-  summary: Designing algorithms that turn quantum structure into measurable computational advantage.
-  detail: We study algorithms for search, estimation, simulation, optimization, and linear algebra, with an emphasis on rigorous guarantees and realistic resource costs.
-- id: applications
-  icon: fa-solid fa-arrow-trend-up
-  title: Quantum applications
-  summary: Connecting quantum information to finance, scientific computing, and optimization.
-  detail: We develop quantum methods for problems with direct scientific and economic relevance, while keeping a close eye on classical baselines and near-term implementations.
-- id: foundations
-  icon: fa-solid fa-bezier-curve
-  title: Foundations and complexity
-  summary: Mapping the limits of quantum computation and quantum advantage.
-  detail: We use complexity theory, mathematical physics, and statistical reasoning to understand which quantum tasks are hard, learnable, or genuinely enhanced by quantum resources.
+  icon: fa-solid fa-atom
+  title: Quantum Algorithms & Applications
+  summary: Developing quantum and hybrid algorithms for scientifically relevant problems and practical quantum advantage.
+  detail: We develop quantum algorithms for challenging problems in quantum simulation, many-body physics, and eigenstate computation. Our research explores hybrid quantum-classical approaches that combine quantum resources with advanced classical processing, with an emphasis on identifying applications where quantum computers can provide meaningful computational advantages.
+
+- id: fault-tolerance
+  icon: fa-solid fa-shield-halved
+  title: Early Fault-Tolerant & Resource-Efficient Quantum Computing
+  summary: Making useful quantum computation possible with limited quantum resources and early fault-tolerant hardware.
+  detail: We develop methods that reduce the resources required for reliable quantum computation, spanning quantum error mitigation, error suppression, and early fault-tolerant algorithms. We investigate trade-offs between qubit counts, circuit depth, sampling overhead, and error-correction resources to enable useful computations before large-scale fault-tolerant quantum computers become available.
+
+- id: measurement
+  icon: fa-solid fa-chart-line
+  title: Quantum Measurement & Estimation
+  summary: Extracting more useful information from quantum computers with fewer measurements and computational resources.
+  detail: We develop efficient methods for measuring and estimating properties of quantum systems, including randomized measurements, classical shadows, observable and amplitude estimation, and statistical post-processing. Our goal is to minimize measurement and circuit costs while retaining the information needed for quantum simulation, eigenstate problems, and other quantum algorithms.

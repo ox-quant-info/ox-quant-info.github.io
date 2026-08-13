@@ -2,11 +2,13 @@
 Postdoctoral Researchers:
   - name: Abhishek Rajput
     role: Postdoctoral Research Associate (2025–)
+    image: files/images/people/abhishek.jpg
     links:
       - icon: fa-solid fa-building-columns
         href: https://www.maths.ox.ac.uk/people/abhishek.rajput
   - name: Armands Strikis
     role: Postdoctoral Research Associate (2025–)
+    image: files/images/people/armands.jpg
     links:
       - icon: fa-solid fa-building-columns
         href: https://www.maths.ox.ac.uk/people/armands.strikis
@@ -26,15 +28,21 @@ Affiliates:
         href: https://www.maths.ox.ac.uk/people/catherine.vollgraff.heidweiller
   - name: Chusei Kiumi
     role: University of Osaka Academic Visitor (2024–)
+    image: files/images/people/chusei.png
     links:
       - icon: fa-solid fa-building-columns
         href: https://qiqb.osaka-u.ac.jp/en/members/article/C_Kiumi
   - name: Bence Bakó
+    image: files/images/people/bence.jpg 
     role: PhD candidate at Wigner Research Centre for Physics; co-supervised with Prof Zoltan Zimboras
 
 DPhil Students:
   - name: Tenzan Araki
     role: DPhil in the Department of Physics (2023–); co-supervised with Dr Joe Goodwin
+    image: files/images/people/tenzan.jpg
+    links:
+      - icon: fa-solid fa-building-columns
+      - href: https://www.physics.ox.ac.uk/our-people/tenzan
   - name: Zhu Sun
     role: DPhil in the Department of Materials (2023–); co-supervised with Prof Simon Benjamin
   - name: Po-Wei Huang
@@ -45,7 +53,7 @@ DPhil Students:
         href: https://www.maths.ox.ac.uk/people/po-wei.huang
       - icon: fa-solid fa-globe
         href: https://georgepwhuang.com/
-  - name: Joshua W. Dai
+  - name: Joshua Dai
     role: DPhil in the Department of Materials (2024–); co-supervised with Prof Simon Benjamin
   - name: Jona Erle
     role: DPhil in the Mathematical Institute (2025–)
@@ -60,6 +68,7 @@ DPhil Students:
       - icon: fa-solid fa-building-columns
         href: https://www.maths.ox.ac.uk/people/fredrik.hasselgren
   - name: Oscar Scholin
+    image: files/images/people/oscar.jpg
     role: DPhil in the Department of Physics (2025–); co-supervised with Prof Andrew Daley
   - name: Tamas Vaszary
     role: DPhil in the Mathematical Institute (2025–)

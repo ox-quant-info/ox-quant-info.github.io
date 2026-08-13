@@ -206,10 +206,11 @@ Commonly used fields are:
 
 The displayed title is normalized to title case while preserving words that are intentionally all-capitalized. Authors matching people in the people YAML or names in `alt_names.yml` are emphasized automatically. The paper link is chosen in this order: arXiv `eprint`, `url`, then `doi`.
 
-The publication page has one list with two filters:
+The publication page has one list with three filters:
 
 - `@article` and `@inproceedings` entries are grouped under **Publications**;
-- other entry types, such as `@misc`, are grouped under **Preprints**.
+- other non-thesis entry types, such as `@misc`, are grouped under **Preprints**;
+- `@phdthesis`, `@mastersthesis`, `@bachelorthesis`, and `@thesis` entries are grouped under **Theses**.
 
 The homepage displays a short five-entry publication preview; the complete list is on `publications.html`.
 
@@ -245,7 +246,7 @@ The root pages are the Nova-compatible page backbones:
 | `index.html` | Hero, research preview, and five-publication preview |
 | `people.html` | Principal-investigator About block, current-member cards, and past-member list |
 | `research.html` | Research-area cards |
-| `publications.html` | Single year-sorted publication list with Publications/Preprints filters |
+| `publications.html` | Single year-sorted publication list with Publications/Preprints/Theses filters |
 | `news.html` | Line-by-line news list |
 | `join.html` | Group contact and joining information |
 

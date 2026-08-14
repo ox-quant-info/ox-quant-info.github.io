@@ -49,11 +49,19 @@ DPhil Students:
     image: files/images/people/george.jpg
     role: DPhil in the Mathematical Institute (2024–)
     links:
+      - icon: fa-brands fa-google-scholar
+        href: https://scholar.google.com/citations?&user=gciMEcAAAAAJ
+      - icon: fa-brands fa-linkedin-in
+        href: https://www.linkedin.com/in/huangpowei
+      - icon: fa-brands fa-orcid
+        href: https://orcid.org/0009-0009-6973-5009
       - icon: fa-solid fa-building-columns
         href: https://www.maths.ox.ac.uk/people/po-wei.huang
       - icon: fa-solid fa-globe
         href: https://georgepwhuang.com/
   - name: Joshua Dai
+    alt_name:
+      - Joshua W. Dai
     role: DPhil in the Department of Materials (2024–); co-supervised with Prof Simon Benjamin
   - name: Jona Erle
     role: DPhil in the Mathematical Institute (2025–)
@@ -63,8 +71,14 @@ DPhil Students:
         href: https://www.maths.ox.ac.uk/people/jona.erle
   - name: Fredrik Hasselgren
     role: DPhil in the Mathematical Institute (2025–)
-    image: files/images/people/fred.jpg
+    image: files/images/people/fred.jpeg
     links:
+      - icon: fa-brands fa-google-scholar
+        href: https://scholar.google.com/citations?user=iquDk4QAAAAJ&hl=en
+      - icon: fa-brands fa-linkedin
+        href: https://www.linkedin.com/in/fredrik-hasselgren-6a938a256/
+      - icon: fa-brands fa-orcid
+        href: https://orcid.org/0009-0007-9273-4480
       - icon: fa-solid fa-building-columns
         href: https://www.maths.ox.ac.uk/people/fredrik.hasselgren
   - name: Oscar Scholin

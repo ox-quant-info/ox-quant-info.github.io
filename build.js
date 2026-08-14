@@ -312,28 +312,65 @@ function peopleData() {
     pi: readYAML('pi.yml', {}),
     main: readYAML('main_members.yml', {}),
     other: readYAML('other_members.yml', {}),
-    altNames: readYAML('alt_names.yml', []),
   };
 }
 
-function memberNames(people) {
-  const names = [];
-  if (people.pi?.name) names.push(people.pi.name);
-  Object.values(people.main || {}).forEach(members => (members || []).forEach(member => names.push(member.name)));
-  Object.values(people.other || {}).forEach(members => (members || []).forEach(member => names.push(member.name)));
-  if (Array.isArray(people.altNames)) names.push(...people.altNames);
-  return new Set(names.filter(Boolean).map(name => normalizeText(name).toLowerCase()));
+function memberRecords(people) {
+  const records = [];
+  if (people.pi?.name) records.push(people.pi);
+  Object.values(people.main || {}).forEach(members => (members || []).forEach(member => records.push(member)));
+  Object.values(people.other || {}).forEach(members => (members || []).forEach(member => records.push(member)));
+  return records.filter(member => member?.name);
 }
 
-function renderAuthors(value, people) {
-  const known = memberNames(people);
-  return splitAuthors(value).map((author, index, authors) => {
+function memberAliases(member) {
+  const aliases = Array.isArray(member?.alt_name)
+    ? member.alt_name
+    : member?.alt_name ? [member.alt_name] : [];
+  return [member.name, ...aliases].filter(Boolean);
+}
+
+function memberNameMap(people) {
+  const names = new Map();
+  memberRecords(people).forEach(member => {
+    const token = memberFilterToken(member.name);
+    if (!token) return;
+    memberAliases(member).forEach(name => names.set(normalizeText(name).toLowerCase(), token));
+  });
+  return names;
+}
+
+function memberFilterToken(value) {
+  return normalizeText(value)
+    .toLocaleLowerCase()
+    .normalize('NFKD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}
+
+function renderAuthors(value, people, interactive = false) {
+  const known = memberNameMap(people);
+  const memberTokens = new Set();
+  const rendered = splitAuthors(value).map((author, index, authors) => {
     const formatted = formatAuthor(author);
-    const output = known.has(formatted.toLowerCase()) ? `<strong>${escapeHtml(formatted)}</strong>` : escapeHtml(formatted);
+    const token = known.get(normalizeText(formatted).toLowerCase()) || '';
+    const isMember = Boolean(token);
+    if (token) memberTokens.add(token);
+
+    const highlighted = isMember ? `<strong>${escapeHtml(formatted)}</strong>` : escapeHtml(formatted);
+    const output = interactive && token
+      ? `<button type="button" class="publication-member-filter" data-publication-member="${escapeAttr(token)}" aria-pressed="false" aria-label="Filter publications by ${escapeAttr(formatted)}">${highlighted}</button>`
+      : highlighted;
     if (index === 0) return output;
     if (index === authors.length - 1) return authors.length === 2 ? ` and ${output}` : `, and ${output}`;
     return `, ${output}`;
-  }).join('');
+  });
+
+  return {
+    html: rendered.join(''),
+    memberTokens: [...memberTokens],
+  };
 }
 
 const FONT_AWESOME_BRANDS = new Set([
@@ -622,9 +659,13 @@ function renderPublicationRow(entry, people, content, auxData, index = 0, isotop
   const bibtexId = `${anchor}-bibtex`;
   const year = normalizeText(entry.tags.year || '');
   const month = publicationMonthLabel(entry.tags.month);
-  const authors = renderAuthors(entry.tags.author || '', people);
+  const authorData = renderAuthors(entry.tags.author || '', people, isotope);
+  const authors = authorData.html;
   const meta = renderPublicationInfo(entry, content);
   const wrapperClass = isotope ? `col-12 portfolio-item isotope-item filter-${filter}` : 'publication-list-item';
+  const memberAttribute = isotope && authorData.memberTokens.length
+    ? ` data-publication-members="${escapeAttr(authorData.memberTokens.join(' '))}"`
+    : '';
   const labels = content?.publications?.action_labels || {};
   const missingAuthors = content?.publications?.missing_authors || '';
   const actionButtons = [];
@@ -692,7 +733,7 @@ function renderPublicationRow(entry, people, content, auxData, index = 0, isotop
     </div>` : '';
 
   return `
-    <div id="${escapeAttr(anchor)}" class="${wrapperClass}">
+    <div id="${escapeAttr(anchor)}" class="${wrapperClass}"${memberAttribute}>
       <article class="publication-row d-flex flex-column flex-md-row align-items-start gap-3">
         <div class="publication-year flex-shrink-0">
           <span class="publication-year-number">${escapeHtml(year)}</span>

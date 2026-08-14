@@ -120,7 +120,7 @@ Each research item uses:
 
 Icons use Font Awesome classes. The `id` is also used for research anchors.
 
-### People: `files/data/pi.yml`, `main_members.yml`, `other_members.yml`, and `alt_names.yml`
+### People: `files/data/pi.yml`, `main_members.yml`, and `other_members.yml`
 
 The principal investigator record supports `name`, `image`, `role`, `bio` (or `introduction`), and `links`:
 
@@ -160,14 +160,16 @@ icon: fa-solid fa-building-columns
 icon: fa-solid fa-globe
 ```
 
-Use `alt_names.yml` for author-name variants that should still be recognized as group members in the publication list. It is a YAML list of display-name forms, such as:
+Add `alt_name` to a member record when their publication author name differs from their displayed group-member name. It can contain one or more display-name forms:
 
 ```yaml
-- Joshua W. Dai
-- Matthew L. Goh
+- name: Example Researcher
+  alt_name:
+    - Example J. Researcher
+    - Researcher, Example J.
 ```
 
-These names are used only for matching and author emphasis; they do not create additional people cards.
+These names are used only for publication matching and author emphasis; they do not create additional people cards. Canonical and alternate names are clickable on `publications.html` and apply the same member filter.
 
 ### News: `files/data/news.yml`
 
@@ -204,7 +206,7 @@ Commonly used fields are:
 }
 ```
 
-The displayed title is normalized to title case while preserving words that are intentionally all-capitalized. Authors matching people in the people YAML or names in `alt_names.yml` are emphasized automatically. The paper link is chosen in this order: arXiv `eprint`, `url`, then `doi`.
+The displayed title is normalized to title case while preserving words that are intentionally all-capitalized. Authors matching people in the people YAML, including their `alt_name` forms, are emphasized automatically. On `publications.html`, emphasized member names are clickable filters; clicking a name shows that member's papers, and clicking it again clears the member filter. The paper link is chosen in this order: arXiv `eprint`, `url`, then `doi`.
 
 The publication page has one list with three filters:
 

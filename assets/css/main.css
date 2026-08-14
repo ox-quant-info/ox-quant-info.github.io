@@ -2541,6 +2541,33 @@ section,
   font-size: 14px;
 }
 
+.publication-member-filter {
+  display: inline;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, var(--accent-color), transparent 60%);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+
+.publication-member-filter:hover,
+.publication-member-filter:focus-visible,
+.publication-member-filter.member-filter-active {
+  color: var(--accent-color);
+  text-decoration-color: currentColor;
+  outline: none;
+}
+
+.publication-member-filter strong {
+  font-weight: 700;
+}
+
 .publication-meta {
   margin-top: 4px;
   color: color-mix(in srgb, var(--default-color), transparent 45%);

@@ -131,6 +131,34 @@
     let sort = isotopeItem.getAttribute('data-sort') ?? 'original-order';
 
     let initIsotope;
+    let activeFilter = filter;
+    let activeMember = '';
+
+    function updateMemberFilterState() {
+      isotopeItem.querySelectorAll('.publication-member-filter').forEach(function(member) {
+        const isActive = Boolean(activeMember) && member.getAttribute('data-publication-member') === activeMember;
+        member.classList.toggle('member-filter-active', isActive);
+        member.setAttribute('aria-pressed', String(isActive));
+      });
+    }
+
+    function arrangeIsotope() {
+      if (!initIsotope) return;
+
+      const filterFunction = activeMember
+        ? function(item) {
+          const matchesCategory = activeFilter === '*' || item.matches(activeFilter);
+          const members = String(item.getAttribute('data-publication-members') || '').split(/\s+/).filter(Boolean);
+          return matchesCategory && members.includes(activeMember);
+        }
+        : activeFilter;
+
+      initIsotope.arrange({ filter: filterFunction });
+      if (typeof aosInit === 'function') {
+        aosInit();
+      }
+    }
+
     imagesLoaded(isotopeItem.querySelector('.isotope-container'), function() {
       initIsotope = new Isotope(isotopeItem.querySelector('.isotope-container'), {
         itemSelector: '.isotope-item',
@@ -138,18 +166,28 @@
         filter: filter,
         sortBy: sort
       });
+      arrangeIsotope();
     });
 
     isotopeItem.querySelectorAll('.isotope-filters li').forEach(function(filters) {
       filters.addEventListener('click', function() {
-        isotopeItem.querySelector('.isotope-filters .filter-active').classList.remove('filter-active');
+        const activeFilterElement = isotopeItem.querySelector('.isotope-filters .filter-active');
+        if (activeFilterElement) activeFilterElement.classList.remove('filter-active');
         this.classList.add('filter-active');
-        initIsotope.arrange({
-          filter: this.getAttribute('data-filter')
-        });
-        if (typeof aosInit === 'function') {
-          aosInit();
-        }
+        activeFilter = this.getAttribute('data-filter') || '*';
+        activeMember = '';
+        updateMemberFilterState();
+        arrangeIsotope();
+      }, false);
+    });
+
+    isotopeItem.querySelectorAll('.publication-member-filter').forEach(function(member) {
+      member.addEventListener('click', function(event) {
+        event.preventDefault();
+        const selectedMember = this.getAttribute('data-publication-member') || '';
+        activeMember = activeMember === selectedMember ? '' : selectedMember;
+        updateMemberFilterState();
+        arrangeIsotope();
       }, false);
     });
 

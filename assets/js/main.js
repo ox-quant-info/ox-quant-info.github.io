@@ -142,21 +142,52 @@
       });
     }
 
+    function refreshPublicationAos() {
+      if (typeof AOS !== 'undefined' && typeof AOS.refresh === 'function') {
+        AOS.refresh();
+      }
+    }
+
+    function matchesActivePublication(item) {
+      const matchesCategory = activeFilter === '*' || item.matches(activeFilter);
+      if (!matchesCategory || !activeMember) return matchesCategory;
+      const members = String(item.getAttribute('data-publication-members') || '').split(/\s+/).filter(Boolean);
+      return members.includes(activeMember);
+    }
+
+    function syncPublicationLightbox() {
+      if (!glightbox || typeof glightbox.setElements !== 'function') return;
+      const elements = Array.from(isotopeItem.querySelectorAll('.glightbox[data-publication-action="bibtex"]'))
+        .filter(link => {
+          const item = link.closest('.isotope-item');
+          return !item || matchesActivePublication(item);
+        });
+      glightbox.setElements(elements);
+      if (Array.isArray(glightbox.elements)) {
+        glightbox.elements.forEach((element, index) => {
+          element.node = elements[index];
+        });
+      }
+    }
+
     function arrangeIsotope() {
       if (!initIsotope) return;
 
       const filterFunction = activeMember
-        ? function(item) {
-          const matchesCategory = activeFilter === '*' || item.matches(activeFilter);
-          const members = String(item.getAttribute('data-publication-members') || '').split(/\s+/).filter(Boolean);
-          return matchesCategory && members.includes(activeMember);
-        }
+        ? matchesActivePublication
         : activeFilter;
 
-      initIsotope.arrange({ filter: filterFunction });
-      if (typeof aosInit === 'function') {
-        aosInit();
+      if (typeof initIsotope.once === 'function') {
+        initIsotope.once('arrangeComplete', function() {
+          refreshPublicationAos();
+          syncPublicationLightbox();
+        });
       }
+      initIsotope.arrange({ filter: filterFunction });
+      window.requestAnimationFrame(function() {
+        refreshPublicationAos();
+        syncPublicationLightbox();
+      });
     }
 
     imagesLoaded(isotopeItem.querySelector('.isotope-container'), function() {
@@ -265,6 +296,86 @@
       if (isotope) isotope.layout();
     }
 
+    function beginPublicationReflow(abstract) {
+      const container = abstract.closest('.isotope-container');
+      const item = abstract.closest('.isotope-item');
+      if (!container || !item || typeof Isotope === 'undefined' || typeof Isotope.data !== 'function' || typeof ResizeObserver === 'undefined') {
+        return () => {};
+      }
+
+      const isotope = Isotope.data(container);
+      if (!isotope) return () => {};
+
+      const previousTransitionDuration = isotope.options.transitionDuration;
+      isotope.options.transitionDuration = 0;
+      let frameId = 0;
+      const relayout = () => {
+        if (frameId) return;
+        frameId = window.requestAnimationFrame(() => {
+          frameId = 0;
+          isotope.layout();
+        });
+      };
+      const observer = new ResizeObserver(relayout);
+      observer.observe(item);
+      relayout();
+
+      return () => {
+        observer.disconnect();
+        if (frameId) window.cancelAnimationFrame(frameId);
+        isotope.options.transitionDuration = previousTransitionDuration;
+        isotope.layout();
+      };
+    }
+
+    function updatePublicationAbstractHeight(abstract) {
+      if (!abstract.classList.contains('is-open') || abstract.style.maxHeight === 'none') return;
+      abstract.style.maxHeight = `${abstract.scrollHeight}px`;
+    }
+
+    function togglePublicationAbstract(abstract, open) {
+      if (typeof abstract.publicationTransitionCleanup === 'function') {
+        abstract.publicationTransitionCleanup();
+      }
+
+      const cleanupReflow = beginPublicationReflow(abstract);
+      let finished = false;
+      const finish = () => {
+        if (finished) return;
+        finished = true;
+        abstract.removeEventListener('transitionend', onTransitionEnd);
+        abstract.style.maxHeight = open ? 'none' : '';
+        cleanupReflow();
+        abstract.publicationTransitionCleanup = null;
+      };
+      const onTransitionEnd = event => {
+        if (event.target === abstract && event.propertyName === 'max-height') finish();
+      };
+
+      abstract.publicationTransitionCleanup = finish;
+      abstract.addEventListener('transitionend', onTransitionEnd);
+
+      if (open) {
+        abstract.classList.add('is-open');
+        abstract.style.maxHeight = '0px';
+        abstract.offsetHeight;
+        window.requestAnimationFrame(() => {
+          abstract.style.maxHeight = `${abstract.scrollHeight}px`;
+          relayoutPublicationGrid(abstract);
+        });
+      } else {
+        abstract.style.maxHeight = `${abstract.getBoundingClientRect().height}px`;
+        abstract.offsetHeight;
+        abstract.classList.remove('is-open');
+        window.requestAnimationFrame(() => {
+          abstract.style.maxHeight = '0px';
+          relayoutPublicationGrid(abstract);
+        });
+      }
+
+      window.setTimeout(finish, 500);
+    }
+
     function typesetPublicationMath(abstract) {
       if (!window.MathJax?.typesetPromise) return Promise.resolve();
       return window.MathJax.typesetPromise([abstract]).catch(() => {});
@@ -280,12 +391,13 @@
         const abstract = document.getElementById(action.getAttribute('aria-controls'));
         if (!abstract) return;
         const open = !abstract.classList.contains('is-open');
-        abstract.classList.toggle('is-open', open);
         abstract.setAttribute('aria-hidden', String(!open));
         action.setAttribute('aria-expanded', String(open));
-        relayoutPublicationGrid(abstract);
-        window.requestAnimationFrame(() => relayoutPublicationGrid(abstract));
-        typesetPublicationMath(abstract).then(() => relayoutPublicationGrid(abstract));
+        togglePublicationAbstract(abstract, open);
+        typesetPublicationMath(abstract).then(() => {
+          updatePublicationAbstractHeight(abstract);
+          relayoutPublicationGrid(abstract);
+        });
         return;
       }
 

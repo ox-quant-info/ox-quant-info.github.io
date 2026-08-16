@@ -1,19 +1,23 @@
 ---
 Postdoctoral Researchers:
   - name: Abhishek Rajput
-    role: Postdoctoral Research Associate (2025–)
+    role: Postdoctoral Research Associate (2025--)
     image: files/images/people/abhishek.jpg
     links:
+      - icon: fa-brands fa-google-scholar
+        href: https://scholar.google.com/citations?user=MHSum2kAAAAJ
+      - icon: fa-brands fa-orcid
+        href: https://orcid.org/0009-0006-1500-505X
       - icon: fa-solid fa-building-columns
         href: https://www.maths.ox.ac.uk/people/abhishek.rajput
   - name: Armands Strikis
-    role: Postdoctoral Research Associate (2025–)
+    role: Postdoctoral Research Associate (2025--)
     image: files/images/people/armands.jpg
     links:
       - icon: fa-solid fa-building-columns
         href: https://www.maths.ox.ac.uk/people/armands.strikis
   - name: Cameron Calcluth
-    role: Postdoctoral Research Fellow (externally funded, 2026–)
+    role: Postdoctoral Research Fellow (externally funded, 2026--)
     image: files/images/people/cameron.jpeg
     links:
       - icon: fa-solid fa-building-columns
@@ -21,13 +25,13 @@ Postdoctoral Researchers:
 
 Affiliates:
   - name: Catherine Vollgraff Heidweiller
-    role: Visiting Fellow, Oxford Quantum Institute Academic Visitor (2026–)
+    role: Visiting Fellow, Oxford Quantum Institute Academic Visitor (2026--)
     image: files/images/people/catherine.png
     links:
       - icon: fa-solid fa-building-columns
         href: https://www.maths.ox.ac.uk/people/catherine.vollgraff.heidweiller
   - name: Chusei Kiumi
-    role: University of Osaka Academic Visitor (2024–)
+    role: University of Osaka Academic Visitor (2024--)
     image: files/images/people/chusei.png
     links:
       - icon: fa-solid fa-building-columns
@@ -38,16 +42,20 @@ Affiliates:
 
 DPhil Students:
   - name: Tenzan Araki
-    role: DPhil in the Department of Physics (2023–); co-supervised with Dr Joe Goodwin
+    role: DPhil in the Department of Physics (2023--); co-supervised with Dr Joe Goodwin
     image: files/images/people/tenzan.jpg
     links:
+      - icon: fa-brands fa-google-scholar
+        href: https://scholar.google.com/citations?user=DByN8DcAAAAJ
+      - icon: fa-brands fa-linkedin-in
+        href: www.linkedin.com/in/tenzan-araki-a1a116140
       - icon: fa-solid fa-building-columns
-      - href: https://www.physics.ox.ac.uk/our-people/tenzan
+        href: https://www.physics.ox.ac.uk/our-people/tenzan
   - name: Zhu Sun
-    role: DPhil in the Department of Materials (2023–); co-supervised with Prof Simon Benjamin
+    role: DPhil in the Department of Materials (2023--); co-supervised with Prof Simon Benjamin
   - name: Po-Wei Huang
     image: files/images/people/george.jpg
-    role: DPhil in the Mathematical Institute (2024–)
+    role: DPhil in the Mathematical Institute (2024--)
     links:
       - icon: fa-brands fa-google-scholar
         href: https://scholar.google.com/citations?&user=gciMEcAAAAAJ
@@ -62,20 +70,20 @@ DPhil Students:
   - name: Joshua Dai
     alt_name:
       - Joshua W. Dai
-    role: DPhil in the Department of Materials (2024–); co-supervised with Prof Simon Benjamin
+    role: DPhil in the Department of Materials (2024--); co-supervised with Prof Simon Benjamin
   - name: Jona Erle
-    role: DPhil in the Mathematical Institute (2025–)
+    role: DPhil in the Mathematical Institute (2025--)
     image: files/images/people/jona.jpeg
     links:
       - icon: fa-solid fa-building-columns
         href: https://www.maths.ox.ac.uk/people/jona.erle
   - name: Fredrik Hasselgren
-    role: DPhil in the Mathematical Institute (2025–)
+    role: DPhil in the Mathematical Institute (2025--)
     image: files/images/people/fred.jpeg
     links:
       - icon: fa-brands fa-google-scholar
-        href: https://scholar.google.com/citations?user=iquDk4QAAAAJ&hl=en
-      - icon: fa-brands fa-linkedin
+        href: https://scholar.google.com/citations?user=iquDk4QAAAAJ
+      - icon: fa-brands fa-linkedin-in
         href: https://www.linkedin.com/in/fredrik-hasselgren-6a938a256/
       - icon: fa-brands fa-orcid
         href: https://orcid.org/0009-0007-9273-4480
@@ -83,12 +91,24 @@ DPhil Students:
         href: https://www.maths.ox.ac.uk/people/fredrik.hasselgren
   - name: Oscar Scholin
     image: files/images/people/oscar.jpg
-    role: DPhil in the Department of Physics (2025–); co-supervised with Prof Andrew Daley
-  - name: Tamas Vaszary
-    role: DPhil in the Mathematical Institute (2025–)
+    role: DPhil in the Department of Physics (2025--); co-supervised with Prof Andrew Daley
+  - name: Tamás Vaszary
+    role: DPhil in the Mathematical Institute (2025--)
     image: files/images/people/tamas.png
     links:
+      - icon: fa-brands fa-google-scholar
+        href: https://scholar.google.com/citations?user=qs_SqNwAAAAJ
+      - icon: fa-brands fa-linkedin-in
+        href: https://www.linkedin.com/in/tamas-vaszary-b3504b237/
+      - icon: fa-brands fa-orcid
+        href: https://orcid.org/0000-0001-7811-222X
       - icon: fa-solid fa-building-columns
         href: https://www.maths.ox.ac.uk/people/tamas.vaszary
       - icon: fa-solid fa-globe
-        href: https://tamasvaszary.com/
+        href: https://www.tamasvaszary.com/
+  - name: Judd Katz
+    role: DPhil in the Mathematical Institute (2026--)
+    image: files/images/people/judd.jpg
+    links: 
+      - icon: fa-brands fa-google-scholar
+        href: https://scholar.google.com/citations?hl=en&user=zFICsvoAAAAJ

@@ -40,7 +40,7 @@ Open <http://localhost:8000>. Preview `dist/`, not the root directory, because t
 
 1. Loads the files in `files/data/`.
 2. Parses `ref.bib` and sorts publications by year and bibliography order.
-3. Reads each root HTML template listed in `build.js`.
+3. Reads only the root HTML templates enabled in `content.yml` under `navigation`.
 4. Renders the navigation, page titles, metadata, footer, people, research areas, news, publications, abstracts, and publication actions.
 5. Copies `assets/` and all public files under `files/`, except `files/data/`.
 6. Writes `.nojekyll` and a sitemap to `dist/`.
@@ -92,7 +92,7 @@ navigation:
     label: People
 ```
 
-To keep a page under construction, remove or comment out its navigation item. The root template can remain in the build while the page is hidden from the menu. A page title is looked up by matching the navigation `key` to the page key in `build.js`; there is no separate `page_titles` dictionary.
+To keep a page under construction, remove or comment out its navigation item. The root template can remain in the repository, but it will not be rendered into `dist/` or included in the sitemap. A page title is looked up by matching the navigation `key` to the page key in `build.js`; there is no separate `page_titles` dictionary.
 
 The same file contains copy and labels for:
 
@@ -252,7 +252,7 @@ The root pages are the Nova-compatible page backbones:
 | `news.html` | Line-by-line news list |
 | `join.html` | Group contact and joining information |
 
-Edit these files when the structure or Nova layout needs to change. Leave empty data slots in place for `build.js` to fill. A new page requires a root HTML template plus a corresponding entry in `PAGES` and renderer logic in `build.js`; adding a navigation item alone does not create a page.
+Edit these files when the structure or Nova layout needs to change. Leave empty data slots in place for `build.js` to fill. A new page requires a root HTML template plus a corresponding entry in `PAGES` and renderer logic in `build.js`; it is emitted only when its matching navigation item is enabled.
 
 Use `assets/css/main.css` for site-specific styling and `assets/js/main.js` for browser behavior. The site primarily uses Font Awesome rather than Bootstrap Icons. Use `fa-solid`, `fa-regular`, or `fa-brands` classes consistently.
 
@@ -293,4 +293,4 @@ When the site is ready to launch, change this line in `.github/workflows/build.y
 COMING_SOON: 'false'
 ```
 
-Commit and push that change. The next workflow run will publish all six data-rendered pages instead of the maintenance page.
+Commit and push that change. The next workflow run will publish the data-rendered pages currently enabled in `files/data/content.yml` instead of the maintenance page.

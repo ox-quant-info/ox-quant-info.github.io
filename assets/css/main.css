@@ -2551,9 +2551,10 @@ section,
   font: inherit;
   cursor: pointer;
   text-decoration: underline;
-  text-decoration-color: color-mix(in srgb, var(--accent-color), transparent 60%);
+  text-decoration-style: dotted;
+  text-decoration-color: color-mix(in srgb, var(--accent-color), transparent 30%);
   text-decoration-thickness: 1px;
-  text-underline-offset: 3px;
+  text-underline-offset: 2px;
 }
 
 .publication-member-filter:hover,
@@ -2622,11 +2623,10 @@ section,
   margin-top: 0;
   overflow: hidden;
   opacity: 0;
-  transition: opacity 0.18s ease;
+  transition: max-height 0.32s ease, margin-top 0.32s ease, opacity 0.18s ease;
 }
 
 .publication-abstract.is-open {
-  max-height: 3000px;
   margin-top: 14px;
   opacity: 1;
 }

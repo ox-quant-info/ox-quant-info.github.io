@@ -21,6 +21,16 @@ const PAGES = [
   { file: 'join.html', page: 'join', bodyClass: 'contact-page', active: 'join' },
 ];
 
+function pagesInUse(content) {
+  const navigation = Array.isArray(content?.navigation) ? content.navigation : [];
+  const activeKeys = new Set(
+    navigation
+      .filter(item => item && item.key && item.href && item.label)
+      .map(item => String(item.key))
+  );
+  return PAGES.filter(page => activeKeys.has(page.active));
+}
+
 const PAGE_IMAGES = {
   landing: 'files/images/background/landing.png',
   research: 'files/images/background/research.webp',
@@ -37,7 +47,9 @@ function escapeHtml(value) {
     .replaceAll('<', '&lt;')
     .replaceAll('>', '&gt;')
     .replaceAll('"', '&quot;')
-    .replaceAll("'", '&#39;');
+    .replaceAll("'", '&#39;')
+    .replaceAll("--", '&ndash;')
+    .replaceAll("---", '&mdash;');
 }
 
 function escapeAttr(value) {
@@ -447,7 +459,7 @@ function allMainMembers(people) {
 
 function renderTextPeopleList(members) {
   return (members || []).map(member => `
-    <div class="person-list-row d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-2">
+    <div class="person-list-row d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-2" data-aos="fade">
       <div>
         <h4>${escapeHtml(member.name || '')}</h4>
         <p>${escapeHtml(member.role || '')}</p>
@@ -456,22 +468,12 @@ function renderTextPeopleList(members) {
     </div>`).join('');
 }
 
-function linkLabel(link) {
-  const href = String(link?.href || '').toLowerCase();
-  const icon = String(link?.icon || '').toLowerCase();
-  if (icon.includes('orcid') || href.includes('orcid')) return 'ORCID profile';
-  if (href.includes('maths.ox.ac.uk')) return 'Oxford profile';
-  if (href.includes('appliedqc.org')) return 'AppliedQC';
-  if (href.includes('arturekert.org')) return 'Personal website';
-  return 'External profile';
-}
-
 function renderPiLinks(links = []) {
   return (links || []).filter(link => link?.href).map(link => {
     const href = escapeAttr(link.href);
     const target = String(link.href).startsWith('mailto:') ? '' : ' target="_blank" rel="noopener noreferrer"';
     const icon = normalizeFontAwesomeIcon(link.icon, iconForLink(link.href));
-    const label = linkLabel(link);
+    const label = link.name || link.label || link.title || 'External profile';
     return `<a class="pi-link" href="${href}"${target} aria-label="${escapeAttr(label)}"><i class="${escapeAttr(icon)}" aria-hidden="true"></i><span>${escapeHtml(label)}</span></a>`;
   }).join('');
 }
@@ -663,6 +665,7 @@ function renderPublicationRow(entry, people, content, auxData, index = 0, isotop
   const authors = authorData.html;
   const meta = renderPublicationInfo(entry, content);
   const wrapperClass = isotope ? `col-12 portfolio-item isotope-item filter-${filter}` : 'publication-list-item';
+  const animationAttributes = ' data-aos="fade"';
   const memberAttribute = isotope && authorData.memberTokens.length
     ? ` data-publication-members="${escapeAttr(authorData.memberTokens.join(' '))}"`
     : '';
@@ -734,7 +737,7 @@ function renderPublicationRow(entry, people, content, auxData, index = 0, isotop
 
   return `
     <div id="${escapeAttr(anchor)}" class="${wrapperClass}"${memberAttribute}>
-      <article class="publication-row d-flex flex-column flex-md-row align-items-start gap-3">
+      <article class="publication-row d-flex flex-column flex-md-row align-items-start gap-3"${animationAttributes}>
         <div class="publication-year flex-shrink-0">
           <span class="publication-year-number">${escapeHtml(year)}</span>
           ${month ? `<span class="publication-month">${escapeHtml(month)}</span>` : ''}
@@ -981,6 +984,7 @@ async function build() {
   const aux = readYAML('aux.yml', {});
   const publications = loadPublications();
   const context = { site, content, research, people, news, aux, publications };
+  const activePages = pagesInUse(content);
 
   await fs.remove(DIST);
   await fs.mkdirp(DIST);
@@ -996,7 +1000,7 @@ async function build() {
   }
 
   const sitemapURLs = [];
-  for (const page of PAGES) {
+  for (const page of activePages) {
     const sourcePath = path.join(ROOT, page.file);
     const sourceHTML = await fs.readFile(sourcePath, 'utf8');
     const $ = cheerio.load(sourceHTML, { decodeEntities: false });

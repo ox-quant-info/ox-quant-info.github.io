@@ -7,9 +7,14 @@ bio: |
 
   I lead the Quantum Information, Computation and Cryptography group and we work on a broad spectrum of problems in quantum computing, from applications and algorithms through to quantum error correction. We work with experimentalists and with quantum companies to develop optimised platforms to best tailor quantum applications to hardware. This includes developing new and improved ways to deal with errors (error correction and mitigation techniques) in quantum computers while we also use classical supercomputers to squeeze out as much performance from quantum computers as possible. I also work closely with the London-based scale up Quantum Motion Technologies as a Lead Quantum Theorist.
   
-  My Erdős number is 4.
+  My Erdős number is [4](https://mathscinet.ams.org/mathscinet/freetools/collab-dist?source=1333653&target=189017).
 links:
-  - icon: fa-solid fa-building-columns
-    href: https://www.maths.ox.ac.uk/people/balint.koczor
+  - icon: fa-brands fa-google-scholar
+    name: Google Scholar
+    href: https://scholar.google.com/citations?user=7o6hVtwAAAAJ
   - icon: fa-brands fa-orcid
+    name: ORCID
     href: https://orcid.org/0000-0002-4319-6870
+  - icon: fa-solid fa-building-columns
+    name: Oxford Profile
+    href: https://www.maths.ox.ac.uk/people/balint.koczor

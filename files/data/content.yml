@@ -23,11 +23,11 @@ meta:
 
 home:
   hero:
-    title_line: Quantum Information at Oxford
-    description: We develop quantum algorithms, learning theory, and mathematical tools for useful quantum technologies.
+    title_line: Oxford Quantum Information Group
+    description: We conduct theoretical research into all aspects of quantum information processing, and into the implications of the quantum theory of computation for physics itself.
     primary_label: Explore research
     secondary_label: Meet the group
-    image_alt: Research group working together
+    image_alt: Quantum information
   publications:
     title: Recent publications
     link_label: View all publications

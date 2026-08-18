@@ -71,10 +71,19 @@ DPhil Students:
     alt_name:
       - Joshua W. Dai
     role: DPhil in the Department of Materials (2024--); co-supervised with Prof Simon Benjamin
+    links:
+      - icon: fa-brands fa-google-scholar
+        href: https://scholar.google.com/citations?user=wKJdx4AAAAAJ
+      - icon: fa-brands fa-orcid
+        href: https://orcid.org/0009-0007-8178-2655
   - name: Jona Erle
     role: DPhil in the Mathematical Institute (2025--)
     image: files/images/people/jona.jpeg
     links:
+      - icon: fa-brands fa-google-scholar
+        href: https://scholar.google.com/citations?user=V2n2U28AAAAJ
+      - icon: fa-brands fa-orcid
+        href: https://orcid.org/0009-0005-4066-8616
       - icon: fa-solid fa-building-columns
         href: https://www.maths.ox.ac.uk/people/jona.erle
   - name: Fredrik Hasselgren
@@ -92,6 +101,15 @@ DPhil Students:
   - name: Oscar Scholin
     image: files/images/people/oscar.jpg
     role: DPhil in the Department of Physics (2025--); co-supervised with Prof Andrew Daley
+    links:
+      - icon: fa-brands fa-google-scholar
+        href: https://scholar.google.com/citations?user=60-BAFwAAAAJ
+      - icon: fa-brands fa-linkedin-in
+        href: https://www.linkedin.com/in/oscar-scholin-3aa1a01a5/
+      - icon: fa-brands fa-orcid
+        href: https://orcid.org/0009-0005-3537-4736
+      - icon: fa-solid fa-globe
+        href: https://oscars47.github.io/
   - name: Tamás Vaszary
     role: DPhil in the Mathematical Institute (2025--)
     image: files/images/people/tamas.png

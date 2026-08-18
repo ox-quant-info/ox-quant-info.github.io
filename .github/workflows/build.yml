@@ -24,10 +24,6 @@ jobs:
         run: npm ci
 
       - name: Build site
-        env:
-          # Keep the public site on the coming-soon page until launch.
-          # Change this to 'false' when the full site is ready.
-          COMING_SOON: 'true'
         run: npm run build
 
       - name: Deploy to gh-pages

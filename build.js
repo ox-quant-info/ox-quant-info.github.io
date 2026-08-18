@@ -822,7 +822,7 @@ function renderIndex($, context) {
   const fallbackPeopleHref = $('#hero .btn-watch-video').attr('href') || 'people.html';
   $('#hero img').attr('src', PAGE_IMAGES.landing || '').attr('alt', hero.image_alt || '');
   $('#hero h1').html(`${escapeHtml(hero.title_line || '')}`);
-  $('#hero blockquote p').text(`${site.tagline || ''} ${hero.description || ''}`.trim());
+  $('#hero blockquote p').text(`${hero.description || ''}`.trim());
   $('#hero .btn-get-started').attr('href', publicationsHref).html(`<i class="fa-solid fa-atom"></i><span>${escapeHtml(hero.primary_label || '')}</span>`);
   $('#hero .btn-watch-video').attr('href', peopleHref || fallbackPeopleHref).html(`<i class="fa-solid fa-users"></i><span>${escapeHtml(hero.secondary_label || '')}</span>`);
 

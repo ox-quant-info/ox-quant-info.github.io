@@ -155,6 +155,62 @@
       return members.includes(activeMember);
     }
 
+    function filteredBibtexEntries() {
+      return Array.from(isotopeItem.querySelectorAll('.isotope-item'))
+        .filter(matchesActivePublication)
+        .map(item => item.querySelector('.publication-modal-text')?.textContent.trim() || '')
+        .filter(Boolean);
+    }
+
+    function exportSlug(value) {
+      return String(value || '')
+        .toLowerCase()
+        .normalize('NFKD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '') || 'filtered';
+    }
+
+    function exportFilename() {
+      const categoryNames = {
+        '*': 'papers',
+        '.filter-publication': 'publications',
+        '.filter-preprint': 'preprints',
+        '.filter-thesis': 'theses',
+      };
+      let filename = categoryNames[activeFilter] || 'filtered-publications';
+      if (activeMember) {
+        const member = Array.from(isotopeItem.querySelectorAll('.publication-member-filter'))
+          .find(button => button.getAttribute('data-publication-member') === activeMember);
+        filename += `-${exportSlug(member?.textContent.trim() || activeMember)}`;
+      }
+      return `${filename}.bib`;
+    }
+
+    function updateExportButton() {
+      const button = isotopeItem.querySelector('[data-publication-export]');
+      if (!button) return;
+      const count = filteredBibtexEntries().length;
+      button.disabled = count === 0;
+      button.title = count ? `Export ${count} BibTeX entr${count === 1 ? 'y' : 'ies'}` : 'No BibTeX entries in the current filter';
+      button.setAttribute('aria-label', button.title);
+    }
+
+    function exportFilteredBibtex() {
+      const entries = filteredBibtexEntries();
+      if (!entries.length) return;
+
+      const blob = new Blob([`${entries.join('\n\n')}\n`], { type: 'application/x-bibtex;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = exportFilename();
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.setTimeout(() => URL.revokeObjectURL(url), 0);
+    }
+
     function syncPublicationLightbox() {
       if (!glightbox || typeof glightbox.setElements !== 'function') return;
       const elements = Array.from(isotopeItem.querySelectorAll('.glightbox[data-publication-action="bibtex"]'))
@@ -181,12 +237,14 @@
         initIsotope.once('arrangeComplete', function() {
           refreshPublicationAos();
           syncPublicationLightbox();
+          updateExportButton();
         });
       }
       initIsotope.arrange({ filter: filterFunction });
       window.requestAnimationFrame(function() {
         refreshPublicationAos();
         syncPublicationLightbox();
+        updateExportButton();
       });
     }
 
@@ -199,6 +257,9 @@
       });
       arrangeIsotope();
     });
+
+    const exportButton = isotopeItem.querySelector('[data-publication-export]');
+    if (exportButton) exportButton.addEventListener('click', exportFilteredBibtex, false);
 
     isotopeItem.querySelectorAll('.isotope-filters li').forEach(function(filters) {
       filters.addEventListener('click', function() {

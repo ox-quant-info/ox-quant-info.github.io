@@ -1550,10 +1550,32 @@ section,
   margin-right: 0;
 }
 
+.publication-tools {
+  display: flex;
+  justify-content: flex-end;
+  margin: 0 0 20px;
+}
+
+.publication-export:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.publication-export:disabled:hover,
+.publication-export:disabled:focus-visible {
+  border-color: color-mix(in srgb, var(--accent-color), transparent 55%);
+  background: transparent;
+  color: var(--accent-color);
+}
+
 @media (max-width: 575px) {
   .portfolio .portfolio-filters li {
     font-size: 14px;
     margin: 0 5px;
+  }
+
+  .publication-tools {
+    justify-content: center;
   }
 }
 

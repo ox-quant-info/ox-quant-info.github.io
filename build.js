@@ -7,7 +7,7 @@ const bibtexParse = require('bibtex-parse-js');
 const ROOT = process.cwd();
 const DATA = path.join(ROOT, 'files', 'data');
 const DIST = path.join(ROOT, 'dist');
-const SITE_URL = (process.env.SITE_URL || 'https://ox-quant-info.github.io').replace(/\/+$/, '');
+const SITE_URL = (process.env.SITE_URL || 'https://ox-quant-info.uk').replace(/\/+$/, '');
 const COMING_SOON = ['1', 'true', 'yes', 'on'].includes(String(process.env.COMING_SOON || '').toLowerCase());
 
 // These root HTML files are the visual backbone templates. The build reads them

@@ -23,8 +23,8 @@ meta:
 
 home:
   hero:
-    title_line: Oxford Quantum Information Group
-    description: We conduct theoretical research into all aspects of quantum information processing, and into the implications of the quantum theory of computation for physics itself.
+    title_line: Oxford Quantum Information and Computation Group
+    description: We conduct theoretical research into all aspects of quantum information processing, with an emphasis on practical aspects of quantum computing.
     primary_label: Explore research
     secondary_label: Meet the group
     image_alt: Quantum information
@@ -33,7 +33,7 @@ home:
     link_label: View all publications
 research:
   title: Research areas
-  description: We study the theory and practice of quantum information across four connected themes.
+  description: We study the theory and practice of quantum information and computation across four connected themes.
   read_more: Learn more
   image_alt: Group discussion
 

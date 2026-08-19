@@ -893,8 +893,13 @@ function renderResearchPage($, context) {
 function renderPublicationsPage($, context) {
   const { publications, people, content, aux } = context;
   const filters = content.publications?.filters || [];
+  const labels = content.publications?.action_labels || {};
   setPageTitle($, contentTitle(content, 'publications'), PAGE_IMAGES.publications);
   $('#portfolio .portfolio-filters').html(filters.map((item, index) => `<li data-filter="${escapeAttr(item.filter || '')}" class="${index === 0 ? 'filter-active' : ''}">${escapeHtml(item.label || '')}</li>`).join(''));
+  $('#portfolio .publication-tools').html(`
+    <button type="button" class="publication-action publication-export" data-publication-export data-export-label="${escapeAttr(labels.export || 'Export filtered BibTeX')}" disabled>
+      <i class="fa-solid fa-file-export" aria-hidden="true"></i><span>${escapeHtml(labels.export || 'Export filtered BibTeX')}</span>
+    </button>`);
   $('#portfolio .isotope-layout').attr('data-default-filter', '*');
   $('#portfolio .isotope-container').html(renderPortfolioItems(publications, people, content, aux));
 }
@@ -906,8 +911,7 @@ function renderTeamPage($, context) {
   renderPrincipalInvestigatorAbout($, people.pi, site);
   const groups = Object.entries(people.main || {});
   const alumni = Object.values(people.other || {}).flatMap(members => members || []);
-  const html = `<div class="section-title" data-aos="fade-up"><h2>${escapeHtml(copy.section_title || '')}</h2></div>`
-    + groups.filter(([, members]) => members.length).map(([label, members]) => `<div class="mb-5"><h3 class="mb-4">${escapeHtml(label)}</h3><div class="row gy-4">${renderTeamCards(members)}</div></div>`).join('')
+  const html = groups.filter(([, members]) => members.length).map(([label, members]) => `<div class="mb-5"><h3 class="mb-4">${escapeHtml(label)}</h3><div class="row gy-4">${renderTeamCards(members)}</div></div>`).join('')
     + (alumni.length ? `<div><h3 class="mb-4">${escapeHtml(copy.alumni_label || '')}</h3><div class="people-list">${renderTextPeopleList(alumni)}</div></div>` : '');
   $('#team > .container').html(html);
 }

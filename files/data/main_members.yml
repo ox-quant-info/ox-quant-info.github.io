@@ -14,12 +14,20 @@ Postdoctoral Researchers:
     role: Postdoctoral Research Associate (2025--)
     image: files/images/people/armands.jpg
     links:
+      - icon: fa-brands fa-google-scholar
+        href: https://scholar.google.com.hk/citations?user=qZzEY5kAAAAJ
       - icon: fa-solid fa-building-columns
         href: https://www.maths.ox.ac.uk/people/armands.strikis
   - name: Cameron Calcluth
     role: Postdoctoral Research Fellow (externally funded, 2026--)
     image: files/images/people/cameron.jpeg
     links:
+      - icon: fa-brands fa-google-scholar
+        href: https://scholar.google.com/citations?user=bhaAWzoAAAAJ
+      - icon: fa-brands fa-linkedin-in
+        href: https://www.linkedin.com/in/calcluth/
+      - icon: fa-brands fa-orcid
+        href: https://orcid.org/0000-0001-7654-9356
       - icon: fa-solid fa-building-columns
         href: https://www.maths.ox.ac.uk/people/cameron.calcluth
 
@@ -28,6 +36,12 @@ Affiliates:
     role: Visiting Fellow, Oxford Quantum Institute Academic Visitor (2026--)
     image: files/images/people/catherine.png
     links:
+      - icon: fa-brands fa-google-scholar
+        href: https://scholar.google.com/citations?user=oXrLGPkAAAAJ
+      - icon: fa-brands fa-linkedin-in
+        href: https://www.linkedin.com/in/cmv-vollgraffheidweiller
+      - icon: fa-brands fa-orcid
+        href: https://orcid.org/0000-0002-6513-9885
       - icon: fa-solid fa-building-columns
         href: https://www.maths.ox.ac.uk/people/catherine.vollgraff.heidweiller
   - name: Chusei Kiumi
@@ -53,6 +67,7 @@ DPhil Students:
         href: https://www.physics.ox.ac.uk/our-people/tenzan
   - name: Zhu Sun
     role: DPhil in the Department of Materials (2023--); co-supervised with Prof Simon Benjamin
+    image: files/images/people/guy.png
   - name: Po-Wei Huang
     image: files/images/people/george.jpg
     role: DPhil in the Mathematical Institute (2024--)
@@ -71,6 +86,7 @@ DPhil Students:
     alt_name:
       - Joshua W. Dai
     role: DPhil in the Department of Materials (2024--); co-supervised with Prof Simon Benjamin
+    image: files/images/people/guy.png
     links:
       - icon: fa-brands fa-google-scholar
         href: https://scholar.google.com/citations?user=wKJdx4AAAAAJ
@@ -82,6 +98,8 @@ DPhil Students:
     links:
       - icon: fa-brands fa-google-scholar
         href: https://scholar.google.com/citations?user=V2n2U28AAAAJ
+      - icon: fa-brands fa-linkedin-in
+        href: https://www.linkedin.com/in/jona-erle
       - icon: fa-brands fa-orcid
         href: https://orcid.org/0009-0005-4066-8616
       - icon: fa-solid fa-building-columns

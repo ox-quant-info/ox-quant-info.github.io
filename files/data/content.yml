@@ -66,6 +66,7 @@ publications:
   action_labels:
     abstract: Abstract
     bibtex: BibTeX
+    export: Export filtered BibTeX
     link: Paper
 news:
   category_labels:

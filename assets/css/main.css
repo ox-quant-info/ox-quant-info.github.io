@@ -2525,6 +2525,42 @@ section,
   text-transform: uppercase;
 }
 
+.publication-kind {
+  display: block;
+  margin-top: 5px;
+  color: color-mix(in srgb, var(--default-color), transparent 48%);
+  font-family: var(--default-font);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  line-height: 1.1;
+  text-transform: uppercase;
+}
+
+@media (max-width: 768px) {
+  .publication-year,
+  .publication-date {
+    min-width: 0;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0 10px;
+  }
+
+  .publication-year-number {
+    display: inline;
+    font-size: 13px;
+    margin-top: 0;
+  }
+  
+  .publication-month,
+  .publication-kind {
+    display: inline;
+    font-size: 12px;
+    margin-top: 0;
+  }
+}
+
 .publication-title {
   font-size: 19px;
   font-weight: 700;

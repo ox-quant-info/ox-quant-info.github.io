@@ -70,7 +70,7 @@ DPhil Students:
     image: files/images/people/guy.png
   - name: Po-Wei Huang
     image: files/images/people/george.jpg
-    role: DPhil in the Mathematical Institute (2024--)
+    role: DPhil in the Mathematical Institute (2024--); co-supervised with Prof Simon Benjamin and Prof Artur Ekert
     links:
       - icon: fa-brands fa-google-scholar
         href: https://scholar.google.com/citations?&user=gciMEcAAAAAJ
@@ -129,7 +129,7 @@ DPhil Students:
       - icon: fa-solid fa-globe
         href: https://oscars47.github.io/
   - name: Tamás Vaszary
-    role: DPhil in the Mathematical Institute (2025--)
+    role: DPhil in the Mathematical Institute (2025--); co-supervised with Prof Jon Keating
     image: files/images/people/tamas.png
     links:
       - icon: fa-brands fa-google-scholar

@@ -1824,61 +1824,107 @@ section,
 }
 
 /*--------------------------------------------------------------
-# Contact Section
+# Join Collaborators Section
 --------------------------------------------------------------*/
-.contact {
-  background-image: url("../img/contact-bg.png");
-  background-position: left center;
-  background-repeat: no-repeat;
+.join-collaborators-copy {
+  max-width: 850px;
+  margin: 0 auto;
+  text-align: left;
+}
+
+.join-collaborators-copy p {
+  margin: 0 0 14px;
+  line-height: 1.75;
+}
+
+.join-collaborators-copy p:last-child {
+  margin-bottom: 0;
+}
+
+/*--------------------------------------------------------------
+# Join Opportunities Section
+--------------------------------------------------------------*/
+.join-opportunities {
   position: relative;
 }
 
-@media (max-width: 640px) {
-  .contact {
-    background-position: center 50px;
-    background-size: contain;
-  }
-}
-
-.contact:before {
-  content: "";
-  background: color-mix(in srgb, var(--background-color), transparent 30%);
-  position: absolute;
-  bottom: 0;
-  top: 0;
-  left: 0;
-  right: 0;
-}
-
-.contact .info-item+.info-item {
-  margin-top: 40px;
-}
-
-.contact .info-item i {
-  background: var(--accent-color);
-  color: var(--contrast-color);
-  font-size: 20px;
-  width: 44px;
-  height: 44px;
+.join-position-card {
   display: flex;
-  justify-content: center;
+  align-items: flex-start;
+  gap: 22px;
+  padding: 30px;
+  background: var(--surface-color);
+  border: 1px solid color-mix(in srgb, var(--oxford-blue-light), transparent 55%);
+  box-shadow: 0 8px 24px color-mix(in srgb, var(--oxford-blue), transparent 90%);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.join-position-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 28px color-mix(in srgb, var(--oxford-blue), transparent 82%);
+}
+
+.join-position-icon {
+  flex: 0 0 50px;
+  width: 50px;
+  height: 50px;
+  display: inline-flex;
   align-items: center;
-  border-radius: 50px;
-  transition: all 0.3s ease-in-out;
-  margin-right: 15px;
+  justify-content: center;
+  border-radius: 50%;
+  background: var(--oxford-blue);
+  color: var(--contrast-color);
+  font-size: 21px;
 }
 
-.contact .info-item h3 {
-  padding: 0;
-  font-size: 18px;
-  font-weight: 700;
-  margin-bottom: 5px;
+.join-position-content {
+  min-width: 0;
 }
 
-.contact .info-item p {
-  padding: 0;
+.join-position-content h3 {
+  margin: 0 0 14px;
+  font-size: 21px;
+}
+
+.join-position-copy p {
+  margin: 0 0 12px;
+  line-height: 1.7;
+}
+
+.join-position-copy p:last-child {
   margin-bottom: 0;
-  font-size: 14px;
+}
+
+.join-position-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.join-position-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+}
+
+.join-position-link i {
+  font-size: 12px;
+}
+
+@media (max-width: 575px) {
+  .join-position-card {
+    padding: 24px;
+    gap: 16px;
+  }
+
+  .join-position-icon {
+    flex-basis: 44px;
+    width: 44px;
+    height: 44px;
+    font-size: 18px;
+  }
 }
 
 /*--------------------------------------------------------------

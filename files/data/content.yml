@@ -14,9 +14,9 @@ navigation:
   # - key: news
   #   href: news.html
   #   label: News
-  # - key: join
-  #   href: join.html
-  #   label: Join us
+  - key: join
+    href: join.html
+    label: Join us
 
 meta:
   keywords: quantum information, quantum algorithms, quantum computing, Oxford, research group
@@ -76,11 +76,3 @@ news:
     visit: Visit
     arxiv: Preprint
   default_category: Group news
-
-join:
-  intro_title: Work with the group
-  intro_fallback: We welcome prospective students, visitors, and collaborators interested in quantum information.
-  location_label: Where we are
-  audience_label: Who should write
-  audience_text: Prospective students, visitors, and collaborators.
-  email_label: Email us

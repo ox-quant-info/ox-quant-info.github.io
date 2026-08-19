@@ -18,7 +18,7 @@ const PAGES = [
   { file: 'research.html', page: 'research', bodyClass: 'services-page', active: 'research' },
   { file: 'publications.html', page: 'publications', bodyClass: 'portfolio-page', active: 'publications' },
   { file: 'news.html', page: 'news', bodyClass: 'blog-page', active: 'news' },
-  { file: 'join.html', page: 'join', bodyClass: 'contact-page', active: 'join' },
+  { file: 'join.html', page: 'join', bodyClass: 'join-page', active: 'join' },
 ];
 
 function pagesInUse(content) {
@@ -498,6 +498,34 @@ function renderTextPeopleList(members) {
     </div>`).join('');
 }
 
+function renderJoinPosition(section, index = 0) {
+  const paragraphs = paragraphList(section?.text || section?.body || '')
+    .map(text => `<p>${renderMarkdown(text)}</p>`)
+    .join('');
+  const links = (Array.isArray(section?.links) ? section.links : [])
+    .filter(link => link?.href)
+    .map(link => `
+      <a class="join-position-link" href="${escapeAttr(link.href)}" target="_blank" rel="noopener noreferrer">
+        <span>${escapeHtml(link.label || link.name || link.href)}</span>
+        <i class="fa-solid fa-arrow-up-right-from-square" aria-hidden="true"></i>
+      </a>`)
+    .join('');
+
+  return `
+    <div class="col-lg-6" data-aos="fade-up" data-aos-delay="${100 + index * 100}">
+      <article class="join-position-card h-100">
+        <div class="join-position-icon">
+          <i class="${escapeAttr(normalizeFontAwesomeIcon(section?.icon, 'fa-solid fa-briefcase'))}" aria-hidden="true"></i>
+        </div>
+        <div class="join-position-content">
+          <h3>${escapeHtml(section?.title || '')}</h3>
+          <div class="join-position-copy">${paragraphs}</div>
+          ${links ? `<div class="join-position-links">${links}</div>` : ''}
+        </div>
+      </article>
+    </div>`;
+}
+
 function renderPiLinks(links = []) {
   return (links || []).filter(link => link?.href).map(link => {
     const href = escapeAttr(link.href);
@@ -926,22 +954,30 @@ function renderNewsPage($, context) {
 }
 
 function renderJoinPage($, context) {
-  const { site, content } = context;
-  const copy = content.join || {};
+  const { content, join } = context;
+  const copy = join || {};
   setPageTitle($, contentTitle(content, 'join'), PAGE_IMAGES.join);
-  const intro = copy.intro_fallback || site.description || '';
-  const introBlock = $('#contact .col-lg-5').first().find('.mb-5').first();
-  if (introBlock.length) {
-    introBlock.find('h2').text(copy.intro_title || '');
-    introBlock.find('p').html(renderMarkdown(intro));
+
+  const opportunities = copy.opportunities || {};
+  $('#join-opportunities .section-title h2').text(opportunities.title || '');
+  $('#join-opportunities .section-title p').html(renderMarkdown(opportunities.description || ''));
+  const sections = Array.isArray(opportunities.sections) ? opportunities.sections : [];
+  if (sections.length) {
+    $('#join-opportunities .join-position-grid').html(sections.map(renderJoinPosition).join(''));
   } else {
-    $('#contact .col-lg-5').prepend(`<div class="mb-5"><h2>${escapeHtml(copy.intro_title || '')}</h2><p>${renderMarkdown(intro)}</p></div>`);
+    $('#join-opportunities').remove();
   }
-  const email = escapeAttr(site.email || '');
-  const location = escapeHtml(site.location || '');
-  $('#contact .info-item').eq(0).find('h3').text(copy.location_label || '').end().find('p').text(location);
-  $('#contact .info-item').eq(1).find('i').attr('class', 'fa-solid fa-users flex-shrink-0').end().find('h3').text(copy.audience_label || '').end().find('p').text(copy.audience_text || '');
-  $('#contact .info-item').eq(2).find('h3').text(copy.email_label || '').end().find('p').html(`<a href="mailto:${email}">${escapeHtml(site.email || '')}</a>`);
+
+  const collaborators = copy.collaborators || {};
+  const collaboratorParagraphs = paragraphList(collaborators.text || '')
+    .map(text => `<p>${renderMarkdown(text)}</p>`)
+    .join('');
+  $('#join-collaborators .section-title h2').text(collaborators.title || '');
+  if (collaboratorParagraphs) {
+    $('#join-collaborators .join-collaborators-copy').html(collaboratorParagraphs);
+  } else {
+    $('#join-collaborators').remove();
+  }
 }
 
 function renderMaintenancePage($, site, mode = 'coming-soon') {
@@ -1024,9 +1060,10 @@ async function build() {
   const research = readYAML('research.yml', []);
   const people = peopleData();
   const news = readYAML('news.yml', []);
+  const join = readYAML('join.yml', {});
   const aux = readYAML('aux.yml', {});
   const publications = loadPublications();
-  const context = { site, content, research, people, news, aux, publications };
+  const context = { site, content, research, people, news, join, aux, publications };
   const activePages = pagesInUse(content);
 
   await fs.remove(DIST);

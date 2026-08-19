@@ -1,0 +1,23 @@
+collaborators:
+  title: Collaborate with us
+  text:
+    - |
+      We are open to collaborations with researchers and groups working on topics related to our research. Other forms of academic exchange may also be considered where interests align and opportunities arise.
+
+opportunities:
+  title: Opportunities
+  description: >-
+    Opportunities for DPhil students and postdoctoral researchers are outlined below.
+  sections:
+    - id: students
+      icon: fa-solid fa-user-graduate
+      title: Student positions
+      text:
+        - |
+          We are always interested to receive applications from strong candidates for DPhil positions. Please do not get in touch directly to enquire about DPhil positions as all applications are handled CENTRALLY. For more information, please see the main university pages.
+    - id: postdocs
+      icon: fa-solid fa-atom
+      title: Postdoctoral positions
+      text:
+        - |
+          Postdoctoral opportunities arise as suitable funding becomes available. Vacancies are advertised here and through the University when open, with application instructions provided in each announcement.

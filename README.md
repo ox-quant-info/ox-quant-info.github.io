@@ -101,8 +101,34 @@ The same file contains copy and labels for:
 - `people`: member-section labels;
 - `publications`: filters, fallback text, and action labels;
 - `news`: category labels;
-- `join`: contact-page copy; and
 - `meta`: site keywords.
+
+### Join page: `files/data/join.yml`
+
+The Join us page keeps its opportunities and collaboration copy in `join.yml`:
+
+```yaml
+collaborators:
+  title: Collaborate with us
+  text:
+    - Information about possible collaborations.
+opportunities:
+  title: Opportunities
+  description: Opportunities for DPhil students and postdoctoral researchers are outlined below.
+  sections:
+    - id: students
+      icon: fa-solid fa-graduation-cap
+      title: Student positions
+      text:
+        - Information for prospective students.
+    - id: postdocs
+      icon: fa-solid fa-flask
+      title: Postdoctoral positions
+      text:
+        - Information for prospective postdoctoral researchers.
+```
+
+The `opportunities.sections` list becomes the two responsive position cards. The `collaborators` block is rendered as a simple full-width text section beneath them. Both can be edited without changing the HTML template.
 
 Keep data records out of the HTML. Change text in `content.yml` whenever that text is meant to be reusable or generated.
 
@@ -250,7 +276,7 @@ The root pages are the Nova-compatible page backbones:
 | `research.html` | Research-area cards |
 | `publications.html` | Single year-sorted publication list with Publications/Preprints/Theses filters |
 | `news.html` | Line-by-line news list |
-| `join.html` | Group contact and joining information |
+| `join.html` | Student/postdoctoral opportunities and collaboration information |
 
 Edit these files when the structure or Nova layout needs to change. Leave empty data slots in place for `build.js` to fill. A new page requires a root HTML template plus a corresponding entry in `PAGES` and renderer logic in `build.js`; it is emitted only when its matching navigation item is enabled.
 

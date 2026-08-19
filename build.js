@@ -269,6 +269,36 @@ function publicationSortKey(tags) {
   return (Number.parseInt(tags.year, 10) || 0) * 100 + monthToNumber(tags.month);
 }
 
+function publicationSortType(entry) {
+  if (['ARTICLE', 'INPROCEEDINGS'].includes(entry.entryType)) return 1;
+  if (isThesisEntry(entry.entryType)) return 2;
+  return 0;
+}
+
+function arxivSortValue(tags) {
+  const source = String(tags.eprint || tags.url || '');
+  const modern = source.match(/(\d{4})\.(\d{4,5})(?:v\d+)?/i);
+  if (modern) return Number(`${modern[1]}${modern[2].padStart(5, '0')}`);
+
+  const legacy = source.match(/(?:[a-z-]+\/)?(\d{7})(?:v\d+)?/i);
+  return legacy ? Number(legacy[1]) : -1;
+}
+
+function comparePublications(left, right) {
+  const dateOrder = publicationSortKey(right.tags) - publicationSortKey(left.tags);
+  if (dateOrder) return dateOrder;
+
+  const typeOrder = publicationSortType(left) - publicationSortType(right);
+  if (typeOrder) return typeOrder;
+
+  if (publicationSortType(left) === 0) {
+    const arxivOrder = arxivSortValue(right.tags) - arxivSortValue(left.tags);
+    if (arxivOrder) return arxivOrder;
+  }
+
+  return left.originalIndex - right.originalIndex;
+}
+
 function normalizeTags(tags) {
   return Object.fromEntries(Object.entries(tags || {}).map(([key, value]) => [key.toLowerCase(), String(value)]));
 }
@@ -306,7 +336,7 @@ function loadPublications() {
       rawBibtex: extractRawBibEntry(raw, citationKey),
       originalIndex,
     };
-  }).sort((left, right) => publicationSortKey(right.tags) - publicationSortKey(left.tags) || left.originalIndex - right.originalIndex);
+  }).sort(comparePublications);
 }
 
 function splitAuthors(value) {
@@ -644,6 +674,13 @@ function renderPublicationInfo(entry, content) {
   return parts.join(' ');
 }
 
+function publicationStatusLabel(entryType) {
+  if (isThesisEntry(entryType)) return 'Thesis';
+  if (entryType === 'INPROCEEDINGS') return 'Conference';
+  if (entryType === 'ARTICLE') return 'Journal';
+  return 'Preprint';
+}
+
 function publicationAnchor(entry, index = 0) {
   const key = String(entry.citationKey || `publication-${index}`).replace(/[^a-z0-9_-]+/gi, '-');
   return `pub-${key || index}`;
@@ -661,6 +698,7 @@ function renderPublicationRow(entry, people, content, auxData, index = 0, isotop
   const bibtexId = `${anchor}-bibtex`;
   const year = normalizeText(entry.tags.year || '');
   const month = publicationMonthLabel(entry.tags.month);
+  const status = publicationStatusLabel(entry.entryType);
   const authorData = renderAuthors(entry.tags.author || '', people, isotope);
   const authors = authorData.html;
   const meta = renderPublicationInfo(entry, content);
@@ -741,6 +779,7 @@ function renderPublicationRow(entry, people, content, auxData, index = 0, isotop
         <div class="publication-year flex-shrink-0">
           <span class="publication-year-number">${escapeHtml(year)}</span>
           ${month ? `<span class="publication-month">${escapeHtml(month)}</span>` : ''}
+          <span class="publication-kind">${escapeHtml(status)}</span>
         </div>
         <div class="publication-body flex-grow-1">
           <h3 class="publication-title">${url ? `<a href="${escapeAttr(url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(title)}</a>` : escapeHtml(title)}</h3>

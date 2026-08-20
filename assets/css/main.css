@@ -680,7 +680,7 @@ section,
   .hero:after {
     position: absolute;
     content: "";
-    width: 44%;
+    width: 57%;
     background: var(--image-panel-color);
     top: 0;
     bottom: 0;
@@ -728,6 +728,7 @@ section,
 .hero-actions {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 14px 22px;
 }
 
@@ -789,27 +790,30 @@ section,
   color: var(--default-color);
 }
 
-@media (max-width: 640px) {
+@media (max-width: 575px) {
   .hero h1 {
     font-size: 28px;
     line-height: 36px;
   }
 
   .hero-actions {
-    align-items: stretch;
-    flex-direction: column;
-    gap: 10px;
-    width: min(100%, 320px);
+    gap: 8px 12px;
   }
 
   .hero-actions .btn-get-started,
   .hero-actions .btn-watch-video {
-    width: 100%;
     font-size: 13px;
   }
 
   .hero-actions .btn-watch-video {
-    padding: 10px 14px;
+    flex: 0 1 auto;
+    min-height: 44px;
+    padding: 8px 10px;
+  }
+
+  .hero-actions .btn-watch-video i {
+    margin-right: 7px;
+    font-size: 17px;
   }
 }
 
@@ -1775,13 +1779,18 @@ section,
   right: 0;
   opacity: 0;
   transition: ease-in-out 0.3s;
-  text-align: center;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+  row-gap: 10px;
+  padding: 0 12px;
 }
 
 .team .team-member .social a {
   background: color-mix(in srgb, var(--contrast-color), transparent 25%);
   color: color-mix(in srgb, var(--default-color), transparent 20%);
-  margin: 0 3px;
+  margin: 0;
   border-radius: 4px;
   width: 36px;
   height: 36px;
@@ -2883,7 +2892,7 @@ section,
   }
 }
 
-@media (max-height: 560px) {
+@media (max-height: 575px) {
   .glightbox-container .gslide-inline,
   .publication-modal-dialog {
     max-height: calc(100vh - 16px);

@@ -617,7 +617,7 @@ section,
 .section {
   color: var(--default-color);
   background-color: var(--background-color);
-  padding: 60px 0;
+  padding: 50px 0;
   scroll-margin-top: 100px;
   overflow: clip;
 }
@@ -635,7 +635,7 @@ section,
 --------------------------------------------------------------*/
 .section-title {
   text-align: center;
-  padding-bottom: 60px;
+  padding-bottom: 30px;
   position: relative;
 }
 
@@ -821,7 +821,7 @@ section,
 # Why Us Section
 --------------------------------------------------------------*/
 .why-us .img-bg {
-  min-height: 500px;
+  min-height: 380px;
   position: relative;
 }
 
@@ -851,8 +851,12 @@ section,
 }
 
 .why-us .swiper {
-  margin: 140px 140px 120px 140px;
+  margin: 40px 120px 30px;
   overflow: hidden;
+}
+
+.why-us .swiper-slide .item {
+  padding: 0 24px;
 }
 
 .why-us .swiper-wrapper {
@@ -874,7 +878,7 @@ section,
 }
 
 .why-us .swiper-pagination {
-  margin-top: 30px;
+  margin-top: 14px;
   position: relative;
 }
 
@@ -887,8 +891,12 @@ section,
 }
 
 @media (max-width: 1200px) {
+  .why-us .img-bg {
+    min-height: 340px;
+  }
+
   .why-us .swiper {
-    margin: 60px 60px 40px 60px;
+    margin: 25px 60px 18px;
   }
 
   .why-us .swiper-button-prev,
@@ -898,9 +906,72 @@ section,
 }
 
 @media (max-width: 575px) {
-  .why-us .swiper {
-    margin: 40px 40px 20px 40px;
+  .why-us .img-bg {
+    min-height: 280px;
   }
+
+  .why-us .swiper {
+    margin: 18px 25px 10px;
+  }
+
+  .why-us .swiper-slide .item {
+    padding: 0 12px;
+  }
+}
+
+/*--------------------------------------------------------------
+# Location Call To Action
+--------------------------------------------------------------*/
+.location.call-to-action:before {
+  background: color-mix(in srgb, black 70%, transparent);
+}
+
+.location .location-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin: 0 0 16px;
+  color: var(--accent-color);
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.location .location-eyebrow i {
+  font-size: 16px;
+}
+
+.location .location-title {
+  margin-bottom: 16px;
+}
+
+.location .location-description {
+  max-width: 760px;
+  margin: 0 auto;
+  font-size: 17px;
+  line-height: 1.75;
+}
+
+.location .location-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.location-image-credit {
+  max-width: 760px;
+  margin: 18px auto 0;
+  color: color-mix(in srgb, var(--default-color), transparent 20%);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.location-image-credit a {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
 }
 
 /*--------------------------------------------------------------

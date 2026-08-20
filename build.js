@@ -881,6 +881,7 @@ function renderIndex($, context) {
   const { site, research, people, publications, content, aux } = context;
   const copy = content.home || {};
   const hero = copy.hero || {};
+  const locationCopy = copy.location || {};
   const researchCopy = content.research || {};
   const publicationCopy = copy.publications || {};
   const peopleHref = contentHref(content, 'people');
@@ -895,6 +896,34 @@ function renderIndex($, context) {
 
   $('#why-us .img-bg img').attr('src', PAGE_IMAGES.research || '').attr('alt', researchCopy.image_alt || '');
   $('#why-us .swiper-wrapper').html(renderResearchSlides(research));
+
+  $('#location .location-eyebrow span').text(locationCopy.eyebrow || '');
+  $('#location .location-title').text(locationCopy.title || '');
+  $('#location .location-description').html(renderMarkdown(locationCopy.description || ''));
+  const locationImage = String(locationCopy.image || '').trim();
+  if (locationImage) {
+    $('#location .location-background').attr('src', locationImage).attr('alt', locationCopy.image_alt || '');
+  } else {
+    $('#location').remove();
+  }
+  const locationHref = String(locationCopy.link_href || '').trim();
+  const locationLabel = String(locationCopy.link_label || '').trim();
+  if (locationHref && locationLabel) {
+    const locationLink = $('#location .location-link').attr('href', locationHref).find('span').text(locationLabel).end();
+    if (/^https?:\/\//i.test(locationHref)) {
+      locationLink.attr('target', '_blank').attr('rel', 'noopener noreferrer');
+    } else {
+      locationLink.removeAttr('target').removeAttr('rel');
+    }
+  } else {
+    $('#location .location-link').remove();
+  }
+  const locationCredit = String(locationCopy.image_credit || '').trim();
+  if (locationCredit) {
+    $('#location .location-image-credit').html(renderMarkdown(locationCredit));
+  } else {
+    $('#location .location-image-credit').remove();
+  }
 
   if ($('#publications-preview').length) {
     $('#publications-preview .section-title h2').text(publicationCopy.title || '');

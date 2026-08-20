@@ -28,6 +28,17 @@ home:
     primary_label: Explore research
     secondary_label: Meet the group
     image_alt: Quantum information
+  location:
+    eyebrow: University of Oxford
+    title: Mathematical Institute
+    description: >-
+      Led by Prof. Bálint Koczor and based in the Andrew Wiles Building, we conduct theoretical research across quantum information, algorithms, and computation.
+    image: files/images/background/andrew_wiles.jpeg
+    image_alt: The entrance to the Andrew Wiles Building at the Mathematical Institute, University of Oxford
+    link_label: Join us
+    link_href: join.html
+    image_credit: >-
+      Photo: Alain Goriely, [The Mathematical Institute at Oxford University](https://commons.wikimedia.org/wiki/File:The_Mathematical_Institute_at_Oxford_University.jpg), Wikimedia Commons, [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/). Cropped from original.
   publications:
     title: Recent publications
     link_label: View all publications

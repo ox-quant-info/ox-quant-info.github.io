@@ -271,7 +271,7 @@ The root pages are the Nova-compatible page backbones:
 
 | Page | Generated content |
 | --- | --- |
-| `index.html` | Hero, research preview, and five-publication preview |
+| `index.html` | Hero, research preview, Oxford location section, and five-publication preview |
 | `people.html` | Principal-investigator About block, current-member cards, and past-member list |
 | `research.html` | Research-area cards |
 | `publications.html` | Single year-sorted publication list with Publications/Preprints/Theses filters |
@@ -283,6 +283,8 @@ Edit these files when the structure or Nova layout needs to change. Leave empty 
 Use `assets/css/main.css` for site-specific styling and `assets/js/main.js` for browser behavior. The site primarily uses Font Awesome rather than Bootstrap Icons. Use `fa-solid`, `fa-regular`, or `fa-brands` classes consistently.
 
 The palette is anchored by Oxford blue (`#002147`) and uses coordinated medium, light, and pale variants for links, buttons, section surfaces, maintenance pages, and research icons. Update the Oxford-blue variables in `assets/css/main.css` if the group palette changes.
+
+The landing-page location photograph is credited in `files/data/content.yml`. Keep the linked creator, source-file, and license attribution with the image if the photograph is reused or replaced.
 
 Image paths in data and templates should point to public paths such as `files/images/background/research.webp` or `files/images/people/example.webp`. Do not use obsolete `assets/img/` paths.
 

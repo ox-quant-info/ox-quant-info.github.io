@@ -6,7 +6,7 @@
 
 - id: fault-tolerance
   icon: fa-solid fa-shield-halved
-  title: Fault-Tolerance & error handling
+  title: Fault-Tolerance & Error Handling
   summary: Making useful quantum computation possible with limited quantum resources.
   detail: We develop methods that reduce the resources required for reliable quantum computation, spanning quantum error correction, mitigation, error suppression, and synergies with early fault-tolerant algorithm design. We work with a broad range of academic and industrial hardware teams. We investigate trade-offs between qubit counts, circuit depth, sampling overhead, and error-correction resources to enable useful computations before large-scale fault-tolerant quantum computers become available.
 

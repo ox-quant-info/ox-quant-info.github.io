@@ -53,6 +53,9 @@ Affiliates:
   - name: Bence Bakó
     image: files/images/people/bence.jpg 
     role: PhD candidate at Wigner Research Centre for Physics; co-supervised with Prof Zoltan Zimboras
+    links:
+      - icon: fa-brands fa-google-scholar
+        href: https://scholar.google.com/citations?user=n_yWG2AAAAAJ
 
 DPhil Students:
   - name: Tenzan Araki

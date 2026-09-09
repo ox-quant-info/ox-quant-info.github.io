@@ -13,6 +13,7 @@ Postdoctoral Researchers:
   - name: Armands Strikis
     role: Postdoctoral Research Associate (2025--)
     image: files/images/people/armands.jpg
+    arxivId: strikis_a_1
     links:
       - icon: fa-brands fa-google-scholar
         href: https://scholar.google.com.hk/citations?user=qZzEY5kAAAAJ
@@ -61,6 +62,7 @@ DPhil Students:
   - name: Tenzan Araki
     role: DPhil in the Department of Physics (2023--); co-supervised with Dr Joe Goodwin
     image: files/images/people/tenzan.jpg
+    arxivId: araki_t_1
     links:
       - icon: fa-brands fa-google-scholar
         href: https://scholar.google.com/citations?user=DByN8DcAAAAJ
@@ -74,6 +76,7 @@ DPhil Students:
   - name: Po-Wei Huang
     image: files/images/people/george.jpg
     role: DPhil in the Mathematical Institute (2024--); co-supervised with Prof Simon Benjamin and Prof Artur Ekert
+    arxivId: huang_p_4
     links:
       - icon: fa-brands fa-google-scholar
         href: https://scholar.google.com/citations?&user=gciMEcAAAAAJ
@@ -98,6 +101,7 @@ DPhil Students:
   - name: Jona Erle
     role: DPhil in the Mathematical Institute (2025--)
     image: files/images/people/jona.jpeg
+    arxivId: erle_j_1
     links:
       - icon: fa-brands fa-google-scholar
         href: https://scholar.google.com/citations?user=V2n2U28AAAAJ
@@ -110,6 +114,7 @@ DPhil Students:
   - name: Fredrik Hasselgren
     role: DPhil in the Mathematical Institute (2025--)
     image: files/images/people/fred.jpeg
+    arxivId: hasselgren_f_1
     links:
       - icon: fa-brands fa-google-scholar
         href: https://scholar.google.com/citations?user=iquDk4QAAAAJ

@@ -28,6 +28,7 @@ Open <http://localhost:8000>. Preview `dist/`, not the root directory, because t
 | `index.html`, `people.html`, `research.html`, `publications.html`, `news.html`, `join.html` | Root-level Nova/HTML templates. These are the page backbones and are not modified by the build. |
 | `coming-soon.html`, `404.html` | Standalone maintenance and error-page templates. |
 | `build.js` | Build-time renderer. It loads data, fills page sections, renders navigation and footer content, copies public assets, and creates `sitemap.xml`. |
+| `scripts/update-arxiv.js` | Idempotent arXiv author-page scanner that updates the source bibliography and abstract records. |
 | `files/data/` | Source-only YAML and BibTeX records. This directory is intentionally excluded from `dist/`. |
 | `files/images/` | Public background, people, and favicon images. |
 | `assets/` | Nova CSS, custom CSS, JavaScript, and vendor libraries. |
@@ -264,6 +265,27 @@ Supported special fields are:
 Abstracts support Markdown links and MathJax delimiters such as `\(...\)`, `$...$`, `\[...\]`, and `$$...$$`. MathJax is typeset when an abstract is opened. Every bibliography entry also gets a responsive BibTeX lightbox with copy and download actions.
 
 If an abstract or extra link does not appear, first check that the `aux.yml` key exactly matches the BibTeX key after lowercasing, and that the YAML indentation is valid.
+
+### Updating arXiv publications
+
+The updater reads arXiv author identifiers from the PI record and current-member records in `files/data/pi.yml` and `files/data/main_members.yml`. It accepts the existing `arxiv_id`/`arxivId` keys, the explicit `arxiv_author_id`/`arxivAuthorId` keys, their plural forms, or an `https://arxiv.org/a/<id>` link. It skips past-member groups.
+
+Run a preview locally before writing:
+
+```bash
+npm run update:arxiv:dry-run
+```
+
+To apply the changes:
+
+```bash
+npm run update:arxiv
+npm run build
+```
+
+The updater reads each configured public arXiv author page, obtains metadata and the verbatim arXiv abstract, and considers only papers whose original arXiv posting time is within the previous three days. It prepends only new `@misc` records to `files/data/ref.bib` and matching `abs` blocks to `files/data/aux.yml`. New citation keys use `firstauthorlastnameYearFirstImportantWord`, with a numeric suffix for collisions. It is safe to run repeatedly: arXiv ID, DOI, and normalized title checks prevent duplicates. Existing abstract records are not overwritten.
+
+GitHub Actions checks on Monday, Tuesday, Wednesday, Thursday, and Sunday at 23:00 Eastern Time. Because GitHub cron uses UTC, the workflow has two UTC schedules and the script selects the matching Eastern-time run across daylight-saving changes. Scheduled or manual scans open or update a pull request containing only `ref.bib` and `aux.yml`; the normal build-and-deploy job runs when that pull request is merged into `main`. The request delay can be adjusted with the `ARXIV_REQUEST_DELAY_MS` environment variable if needed.
 
 ## Editing the HTML and styling
 

@@ -3,12 +3,66 @@ name: Build and Deploy static site
 on:
   push:
     branches: [main]
+  schedule:
+    # GitHub cron is UTC. Both times are used so the script can run at 23:00
+    # America/Toronto across daylight-saving changes; the script skips the
+    # non-matching UTC run.
+    - cron: '0 3 * * 1-5'
+    - cron: '0 4 * * 1-5'
+  workflow_dispatch:
 
 permissions:
   contents: write
+  pull-requests: write
+
+concurrency:
+  group: arxiv-update-and-build
+  cancel-in-progress: false
 
 jobs:
+  update-arxiv:
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Scan recent arXiv papers
+        run: |
+          if [ "${{ github.event_name }}" = "schedule" ]; then
+            npm run update:arxiv -- --scheduled
+          else
+            npm run update:arxiv
+          fi
+
+      - name: Open pull request for bibliography updates
+        uses: peter-evans/create-pull-request@v7
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          base: main
+          add-paths: |
+            files/data/ref.bib
+            files/data/aux.yml
+          branch: automation/arxiv-updates
+          delete-branch: true
+          commit-message: "chore: update recent arXiv publications"
+          title: "chore: update recent arXiv publications"
+          body: |
+            Automated scan of the configured arXiv author pages.
+
+            This pull request contains only papers first posted in the previous three days and their verbatim abstracts.
+
   build:
+    if: github.event_name == 'push'
     runs-on: ubuntu-latest
 
     steps:

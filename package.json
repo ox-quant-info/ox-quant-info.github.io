@@ -4,7 +4,9 @@
   "private": true,
   "description": "Static academic group website generated from YAML and BibTeX data.",
   "scripts": {
-    "build": "node build.js"
+    "build": "node build.js",
+    "update:arxiv": "node scripts/update-arxiv.js",
+    "update:arxiv:dry-run": "node scripts/update-arxiv.js --dry-run"
   },
   "dependencies": {
     "bibtex-parse-js": "^0.0.24",

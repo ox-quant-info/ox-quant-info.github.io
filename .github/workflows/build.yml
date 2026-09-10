@@ -59,7 +59,7 @@ jobs:
           body: |
             Automated scan of the configured arXiv author pages.
 
-            This pull request contains only papers first posted in the previous three days and their verbatim abstracts.
+            This pull request contains recent Atom-feed papers and any changed title, author, or abstract fields for newly updated arXiv versions.
 
   build:
     if: github.event_name == 'push'

@@ -31,9 +31,9 @@ const LOOKBACK_DAYS = Math.max(1, Number(process.env.ARXIV_LOOKBACK_DAYS || 7));
 function printHelp() {
   console.log(`Usage: node scripts/update-arxiv.js [--dry-run]
 
-Find arXiv papers listed on the author pages configured in pi.yml and
-main_members.yml. New records are prepended to ref.bib and their verbatim
-abstracts are prepended to aux.yml.
+Find recent arXiv papers listed in the author feeds configured in pi.yml and
+main_members.yml. New records are prepended to ref.bib, while changed title,
+author, and abstract fields are updated from the feed.
 
 Options:
   --dry-run   show changes without writing files
@@ -186,7 +186,9 @@ function parseAtomEntries(xml) {
     }
 
     const published = xmlText(block, 'published');
-    const date = new Date(published);
+    const updated = xmlText(block, 'updated');
+    const publishedDate = new Date(published);
+    const updatedDate = new Date(updated);
     const categories = [...block.matchAll(/<category\b[^>]*\bterm=["']([^"']+)["']/gi)]
       .map(match => decodeXml(match[1]).trim()).filter(Boolean);
     const doi = xmlText(block, 'arxiv:doi') || xmlText(block, 'doi');
@@ -196,9 +198,10 @@ function parseAtomEntries(xml) {
       title: xmlText(block, 'title').replace(/\s+/g, ' ').trim(),
       abstract: xmlText(block, 'summary').replace(/\s+/g, ' ').trim(),
       authors,
-      publishedAt: Number.isNaN(date.getTime()) ? null : date,
-      year: Number.isNaN(date.getTime()) ? new Date().getUTCFullYear() : date.getUTCFullYear(),
-      month: Number.isNaN(date.getTime()) ? 'jan' : MONTHS[date.getUTCMonth()],
+      publishedAt: Number.isNaN(publishedDate.getTime()) ? null : publishedDate,
+      updatedAt: Number.isNaN(updatedDate.getTime()) ? null : updatedDate,
+      year: Number.isNaN(publishedDate.getTime()) ? new Date().getUTCFullYear() : publishedDate.getUTCFullYear(),
+      month: Number.isNaN(publishedDate.getTime()) ? 'jan' : MONTHS[publishedDate.getUTCMonth()],
       primaryClass: categories[0] || '',
       doi: doi.replace(/^https?:\/\/doi\.org\//i, '').trim(),
       url: `https://arxiv.org/abs/${id}`
@@ -207,9 +210,9 @@ function parseAtomEntries(xml) {
   return entries;
 }
 
-async function discoverAuthorPapers(authorId) {
+async function discoverAuthorPapers(authorId, now = new Date()) {
   const atom = await fetchText(`https://arxiv.org/a/${encodeURIComponent(authorId)}.atom`);
-  return parseAtomEntries(atom).filter(paper => recentPaper(paper));
+  return parseAtomEntries(atom).filter(paper => recentPaper(paper, now));
 }
 
 function bibTags(entry) {
@@ -236,6 +239,7 @@ function existingBibliography(raw) {
     const arxivId = normaliseArxivId(tags.eprint || tags.arxiv || tags.url || '');
     records.push({
       key: String(entry.citationKey || entry.citation_key || '').toLowerCase(),
+      type: String(entry.entryType || '').toLowerCase(),
       arxivId,
       doi: String(tags.doi || '').toLowerCase(),
       title: normaliseTitle(tags.title)
@@ -274,10 +278,6 @@ function collectAuxiliaryArxivIds(value) {
   return ids;
 }
 
-function hasAbstract(entry) {
-  return Boolean(entry && typeof entry === 'object' && (entry.abs || entry.abstract));
-}
-
 function cleanBibValue(value) {
   return String(value || '').replace(/\r?\n/g, ' ').replace(/\s+/g, ' ').trim().replace(/[{}]/g, '');
 }
@@ -300,6 +300,16 @@ function latexAuthor(value) {
     .replace(/\s+/g, ' ')
     .trim()
     .replace(/[áÁäÄéÉëËíÍïÏóÓöÖúÚüÜýÝÿŸñÑåÅæÆœŒøØß]/g, character => LATEX_AUTHOR_ACCENTS[character]);
+}
+
+function bibAuthorName(value) {
+  const clean = String(value || '').replace(/\s+/g, ' ').trim();
+  if (!clean) return '';
+  if (clean.includes(',')) return clean;
+  const parts = clean.split(' ');
+  if (parts.length === 1) return clean;
+  const lastName = parts.pop();
+  return `${lastName}, ${parts.join(' ')}`;
 }
 
 function authorSurname(author) {
@@ -326,7 +336,7 @@ function bibtexFor(paper, key) {
   const lines = [
     `@misc{${key},`,
     `  title = {${cleanBibValue(paper.title)}},`,
-    `  author = {${paper.authors.map(latexAuthor).join(' and ')}},`,
+    `  author = {${paper.authors.map(author => latexAuthor(bibAuthorName(author))).join(' and ')}},`,
     `  year = ${paper.year},`,
     `  month = ${paper.month},`,
     `  url = {${paper.url}},`,
@@ -352,15 +362,66 @@ function yamlKeyPattern(key) {
   return new RegExp(`^${key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}:\\s*$`, 'm');
 }
 
-function addAbstractToAux(raw, auxEntry, abstract) {
-  if (auxEntry) {
-    const match = raw.match(yamlKeyPattern(auxEntry.key));
-    if (!match) return raw;
-    const insertAt = match.index + match[0].length;
-    return `${raw.slice(0, insertAt)}\n  abs: >-\n${String(abstract).split(/\r?\n/).map(line => `    ${line}`).join('\n')}${raw.slice(insertAt)}`;
+function setAbstractInAux(raw, auxEntry, abstract) {
+  if (!auxEntry) return raw;
+  const keyMatch = raw.match(yamlKeyPattern(auxEntry.key));
+  if (!keyMatch) return raw;
+
+  const entryStart = keyMatch.index;
+  const nextKeyPattern = /^\S[^:\n]*:\s*$/gm;
+  nextKeyPattern.lastIndex = entryStart + keyMatch[0].length;
+  const nextKey = nextKeyPattern.exec(raw);
+  const entryEnd = nextKey ? nextKey.index : raw.length;
+  const entry = raw.slice(entryStart, entryEnd);
+  const value = String(abstract).split(/\r?\n/).map(line => `    ${line}`).join('\n');
+  const field = `  abs: >-\n${value}\n`;
+  const abstractField = /^  (?:abs|abstract):[^\r\n]*(?:\r?\n|$)/m.exec(entry);
+
+  if (!abstractField) {
+    const insertAt = keyMatch[0].length;
+    return `${raw.slice(0, entryStart)}${entry.slice(0, insertAt)}\n${field}${entry.slice(insertAt)}${raw.slice(entryEnd)}`;
   }
 
-  return raw;
+  const nextFieldPattern = /^  [A-Za-z_][\w-]*\s*:/gm;
+  nextFieldPattern.lastIndex = abstractField.index + abstractField[0].length;
+  const nextField = nextFieldPattern.exec(entry);
+  const fieldEnd = nextField ? nextField.index : entry.length;
+  const updatedEntry = `${entry.slice(0, abstractField.index)}${field}${entry.slice(fieldEnd)}`;
+  return `${raw.slice(0, entryStart)}${updatedEntry}${raw.slice(entryEnd)}`;
+}
+
+function bibEntryRange(raw, key) {
+  const escapedKey = String(key).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const startPattern = new RegExp(`^@[^\\n{]+\\{${escapedKey},\\s*$`, 'm');
+  const start = raw.match(startPattern);
+  if (!start) return null;
+  const nextEntry = raw.indexOf('\n@', start.index + start[0].length);
+  return { start: start.index, end: nextEntry === -1 ? raw.length : nextEntry + 1 };
+}
+
+function replaceBibField(entry, field, value) {
+  const pattern = new RegExp(`^(\\s*${field}\\s*=\\s*)\\{[^\\n]*\\}(,?)$`, 'm');
+  if (pattern.test(entry)) return entry.replace(pattern, `$1{${value}}$2`);
+
+  const insertAt = entry.lastIndexOf('\n}');
+  return insertAt === -1
+    ? entry
+    : `${entry.slice(0, insertAt)}  ${field} = {${value}},\n${entry.slice(insertAt)}`;
+}
+
+function updateBibMetadata(raw, key, paper) {
+  const range = bibEntryRange(raw, key);
+  if (!range) return raw;
+  const title = cleanBibValue(paper.title);
+  const authors = paper.authors.map(author => latexAuthor(bibAuthorName(author))).join(' and ');
+  let entry = raw.slice(range.start, range.end);
+  entry = replaceBibField(entry, 'title', title);
+  entry = replaceBibField(entry, 'author', authors);
+  return `${raw.slice(0, range.start)}${entry}${raw.slice(range.end)}`;
+}
+
+function normalizeAbstract(value) {
+  return String(value || '').replace(/\s+/g, ' ').trim();
 }
 
 function prependAuxRecords(raw, records) {
@@ -371,10 +432,18 @@ function prependAuxRecords(raw, records) {
   return `${raw.slice(0, insertAt)}${block}${raw.slice(insertAt)}`;
 }
 
-function recentPaper(paper, now = new Date()) {
-  if (!(paper.publishedAt instanceof Date) || Number.isNaN(paper.publishedAt.getTime())) return false;
+function inLookback(date, now = new Date()) {
   const oldest = now.getTime() - LOOKBACK_DAYS * 24 * 60 * 60 * 1000;
-  return paper.publishedAt.getTime() >= oldest && paper.publishedAt.getTime() <= now.getTime();
+  return date instanceof Date && !Number.isNaN(date.getTime()) &&
+    date.getTime() >= oldest && date.getTime() <= now.getTime();
+}
+
+function recentPaper(paper, now = new Date()) {
+  return inLookback(paper.updatedAt, now);
+}
+
+function newlyPublished(paper, now = new Date()) {
+  return inLookback(paper.publishedAt, now);
 }
 
 async function main() {
@@ -388,6 +457,7 @@ async function main() {
     return;
   }
   const dryRun = args.has('--dry-run');
+  const scanNow = new Date();
   const members = configuredMembers();
   const authorIds = new Map();
 
@@ -407,7 +477,7 @@ async function main() {
   const discoveredPapers = new Map();
   for (const [authorId, names] of authorIds) {
     try {
-      const papers = await discoverAuthorPapers(authorId);
+      const papers = await discoverAuthorPapers(authorId, scanNow);
       papers.forEach(paper => discoveredPapers.set(paper.id, paper));
       console.log(`  ${authorId} (${names.join(', ')}): ${papers.length} recent paper(s)`);
     } catch (error) {
@@ -424,10 +494,10 @@ async function main() {
   const auxRaw = fs.existsSync(AUX_FILE) ? fs.readFileSync(AUX_FILE, 'utf8') : '---\n';
   const auxObject = readYaml(AUX_FILE, {}) || {};
   const existing = existingBibliography(bibRaw);
+  const existingByKey = new Map(existing.map(record => [record.key, record]));
   const existingIds = new Set();
   const auxArxivIds = new Set();
   const arxivKeyById = new Map();
-  const missingAbstractIds = new Set();
   for (const record of existing) {
     const auxEntry = matchingAuxiliaryEntry(auxObject, record.key);
     const auxIds = collectAuxiliaryArxivIds(auxEntry?.value);
@@ -437,17 +507,16 @@ async function main() {
       arxivKeyById.set(id, record.key);
     });
     auxIds.forEach(id => auxArxivIds.add(id));
-    if (!hasAbstract(auxEntry?.value)) recordIds.forEach(id => missingAbstractIds.add(id));
   }
-  const candidateIds = [...discoveredPapers.keys()].filter(id => !existingIds.has(id));
+  const candidateIds = [...discoveredPapers.values()]
+    .filter(paper => newlyPublished(paper, scanNow) && !existingIds.has(paper.id))
+    .map(paper => paper.id);
   const candidateIdSet = new Set(candidateIds);
-  const metadata = [...discoveredPapers.values()]
-    .filter(paper => candidateIdSet.has(paper.id) || missingAbstractIds.has(paper.id));
+  const metadata = [...discoveredPapers.values()];
   console.log(`Known arXiv IDs from ref.bib or matching aux.yml entries: ${existingIds.size}`);
   console.log(`Known arXiv IDs found in matching aux.yml entries: ${auxArxivIds.size}`);
   console.log(`New arXiv ID candidates within the Atom lookback range: ${candidateIds.length}`);
-  console.log(`Matching BibTeX records missing abstracts: ${missingAbstractIds.size}`);
-  console.log(`Recent Atom entries used for BibTeX and abstract updates: ${metadata.length}`);
+  console.log(`Recent Atom entries available for BibTeX and abstract updates: ${metadata.length}`);
   if (!metadata.length) {
     console.log('No eligible Atom entries require a BibTeX or abstract update. No files changed.');
     return;
@@ -457,29 +526,40 @@ async function main() {
   const existingTitles = new Set(existing.map(record => record.title).filter(Boolean));
   const usedKeys = new Set(existing.map(record => record.key).filter(Boolean));
   const newBib = [];
+  let nextBib = bibRaw;
   let nextAux = auxRaw;
   const newAuxRecords = [];
   let abstractCount = 0;
+  let bibMetadataCount = 0;
 
   for (const paper of metadata.sort((a, b) => b.year - a.year || b.id.localeCompare(a.id))) {
     const duplicate = existingIds.has(paper.id) ||
       (paper.doi && existingDois.has(paper.doi.toLowerCase())) ||
       existingTitles.has(normaliseTitle(paper.title));
     let key = arxivKeyById.get(paper.id);
+    const existingRecord = key ? existingByKey.get(key) : null;
+    const canUpdate = !existingRecord || existingRecord.type === 'misc';
 
-    if (!duplicate) {
+    if (!duplicate && candidateIdSet.has(paper.id)) {
       key = citationKey(paper, usedKeys);
       newBib.push(bibtexFor(paper, key));
       arxivKeyById.set(paper.id, key);
       existingIds.add(paper.id);
       if (paper.doi) existingDois.add(paper.doi.toLowerCase());
       existingTitles.add(normaliseTitle(paper.title));
+    } else if (key && canUpdate) {
+      const updatedBib = updateBibMetadata(nextBib, key, paper);
+      if (updatedBib !== nextBib) {
+        nextBib = updatedBib;
+        bibMetadataCount += 1;
+      }
     }
 
     const auxEntry = key ? matchingAuxiliaryEntry(auxObject, key) : null;
-    if (key && paper.abstract && !hasAbstract(auxEntry?.value)) {
+    const storedAbstract = auxEntry?.value?.abs || auxEntry?.value?.abstract || '';
+    if (key && canUpdate && paper.abstract && normalizeAbstract(storedAbstract) !== normalizeAbstract(paper.abstract)) {
       if (auxEntry) {
-        nextAux = addAbstractToAux(nextAux, auxEntry, paper.abstract);
+        nextAux = setAbstractInAux(nextAux, auxEntry, paper.abstract);
       } else {
         newAuxRecords.push(yamlAbstractRecord(key, paper.abstract));
       }
@@ -492,16 +572,16 @@ async function main() {
   nextAux = prependAuxRecords(nextAux, newAuxRecords);
 
   console.log(`New bibliography records: ${newBib.length}`);
-  console.log(`Abstract records added or completed: ${abstractCount}`);
+  console.log(`BibTeX metadata records updated: ${bibMetadataCount}`);
+  console.log(`Abstract records added or updated: ${abstractCount}`);
   if (dryRun) {
     if (newBib.length) console.log(`\n${newBib.join('\n\n')}`);
     if (abstractCount) console.log('\n(dry run: aux.yml changes are not written)');
     return;
   }
 
-  if (newBib.length) {
-    fs.writeFileSync(BIB_FILE, `${newBib.join('\n')}\n${bibRaw.trimStart()}`.trimEnd());
-  }
+  if (newBib.length) nextBib = `${newBib.join('\n')}\n${nextBib.trimStart()}`.trimEnd();
+  if (nextBib !== bibRaw) fs.writeFileSync(BIB_FILE, nextBib);
   if (nextAux !== auxRaw) fs.writeFileSync(AUX_FILE, nextAux.trimEnd());
 }
 

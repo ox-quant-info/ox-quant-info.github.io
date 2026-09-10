@@ -33,6 +33,10 @@ jobs:
         run: npm ci
 
       - name: Scan recent arXiv papers
+        env:
+          ARXIV_REQUEST_DELAY_MS: '5000'
+          ARXIV_RETRY_ATTEMPTS: '5'
+          ARXIV_MAX_RETRY_DELAY_MS: '900000'
         run: |
           if [ "${{ github.event_name }}" = "schedule" ]; then
             npm run update:arxiv -- --scheduled

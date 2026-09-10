@@ -15,9 +15,11 @@ const ROOT = path.resolve(__dirname, '..');
 const DATA = path.join(ROOT, 'files', 'data');
 const BIB_FILE = path.join(DATA, 'ref.bib');
 const AUX_FILE = path.join(DATA, 'aux.yml');
-const REQUEST_DELAY_MS = Math.max(0, Number(process.env.ARXIV_REQUEST_DELAY_MS || 3000));
+const REQUEST_DELAY_MS = Math.max(0, Number(process.env.ARXIV_REQUEST_DELAY_MS || 5000));
+const RETRY_ATTEMPTS = Math.max(1, Number(process.env.ARXIV_RETRY_ATTEMPTS || 5));
+const MAX_RETRY_DELAY_MS = Math.max(1000, Number(process.env.ARXIV_MAX_RETRY_DELAY_MS || 900000));
 const USER_AGENT = process.env.ARXIV_USER_AGENT ||
-  'ox-quant-info-site/1.0 (arXiv bibliography updater)';
+  'ox-quant-info-site/1.0 (arXiv bibliography updater; contact: ox-quant-info@maths.ox.ac.uk)';
 
 const MONTHS = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
 const KEY_STOP_WORDS = new Set([
@@ -39,7 +41,9 @@ Options:
   --help      show this message
 
 Environment:
-  ARXIV_REQUEST_DELAY_MS  delay between arXiv requests (default: 3000)
+  ARXIV_REQUEST_DELAY_MS  delay between arXiv requests (default: 5000)
+  ARXIV_RETRY_ATTEMPTS    attempts for transient failures (default: 5)
+  ARXIV_MAX_RETRY_DELAY_MS maximum retry wait (default: 900000)
   ARXIV_LOOKBACK_DAYS     posting-time lookback (default: 7)
   ARXIV_USER_AGENT        user-agent sent to arXiv`);
 }
@@ -97,10 +101,27 @@ function isUtcScheduledRun(date = new Date()) {
   return [1, 2, 3, 4, 5].includes(date.getUTCDay()) && date.getUTCHours() === 4;
 }
 
-async function fetchText(url, options = {}, attempts = 3) {
+let lastRequestAt = 0;
+
+async function waitForRequestSlot() {
+  const wait = REQUEST_DELAY_MS - (Date.now() - lastRequestAt);
+  if (wait > 0) await sleep(wait);
+  lastRequestAt = Date.now();
+}
+
+function retryAfterMilliseconds(value) {
+  if (!value) return null;
+  const seconds = Number(value);
+  if (Number.isFinite(seconds)) return Math.max(0, seconds * 1000);
+  const timestamp = Date.parse(value);
+  return Number.isNaN(timestamp) ? null : Math.max(0, timestamp - Date.now());
+}
+
+async function fetchText(url, options = {}, attempts = RETRY_ATTEMPTS) {
   let lastError;
   for (let attempt = 1; attempt <= attempts; attempt += 1) {
     try {
+      await waitForRequestSlot();
       const response = await fetch(url, {
         ...options,
         headers: {
@@ -110,14 +131,21 @@ async function fetchText(url, options = {}, attempts = 3) {
         }
       });
       if (!response.ok) {
-        const retryAfter = Number(response.headers.get('retry-after'));
-        const delay = Number.isFinite(retryAfter) ? retryAfter * 1000 : REQUEST_DELAY_MS * attempt;
-        throw new Error(`HTTP ${response.status} (${delay}ms retry suggested)`);
+        const error = new Error(`HTTP ${response.status}`);
+        error.status = response.status;
+        error.retryAfterMs = retryAfterMilliseconds(response.headers.get('retry-after'));
+        throw error;
       }
       return await response.text();
     } catch (error) {
       lastError = error;
-      if (attempt < attempts) await sleep(Math.min(Math.max(1000, REQUEST_DELAY_MS * attempt), 30000));
+      if (attempt < attempts) {
+        const retryDelay = error.status === 429
+          ? error.retryAfterMs ?? Math.min(30000 * (2 ** (attempt - 1)), MAX_RETRY_DELAY_MS)
+          : Math.min(Math.max(1000, REQUEST_DELAY_MS * attempt), 30000);
+        console.warn(`Request attempt ${attempt}/${attempts} failed for ${url}: ${error.message}; retrying in ${Math.ceil(retryDelay / 1000)}s`);
+        await sleep(Math.min(retryDelay, MAX_RETRY_DELAY_MS));
+      }
     }
   }
   throw lastError;
@@ -180,27 +208,8 @@ function parseAtomEntries(xml) {
 }
 
 async function discoverAuthorPapers(authorId) {
-  const html = await fetchText(`https://arxiv.org/a/${encodeURIComponent(authorId)}`);
-  const ids = new Set();
-  const pattern = /(?:https?:\/\/(?:export\.)?arxiv\.org)?\/abs\/([^"'?#<\s]+)/gi;
-  for (const match of html.matchAll(pattern)) {
-    const id = normaliseArxivId(match[1]);
-    if (id) ids.add(id);
-  }
-  return [...ids];
-}
-
-async function fetchMetadata(ids) {
-  const entries = [];
-  const chunkSize = 20;
-  for (let index = 0; index < ids.length; index += chunkSize) {
-    if (index > 0 || REQUEST_DELAY_MS > 0) await sleep(REQUEST_DELAY_MS);
-    const chunk = ids.slice(index, index + chunkSize);
-    const query = chunk.map(id => encodeURIComponent(id)).join(',');
-    const xml = await fetchText(`https://export.arxiv.org/api/query?id_list=${query}&max_results=${chunk.length}`);
-    entries.push(...parseAtomEntries(xml));
-  }
-  return entries;
+  const atom = await fetchText(`https://arxiv.org/a/${encodeURIComponent(authorId)}.atom`);
+  return parseAtomEntries(atom).filter(paper => recentPaper(paper));
 }
 
 function bibTags(entry) {
@@ -235,8 +244,62 @@ function existingBibliography(raw) {
   return records;
 }
 
+function matchingAuxiliaryEntry(auxObject, key) {
+  const target = String(key || '').toLowerCase();
+  if (!target || !auxObject || typeof auxObject !== 'object') return null;
+  const auxKey = Object.keys(auxObject).find(candidate => String(candidate).toLowerCase() === target);
+  return auxKey == null ? null : { key: auxKey, value: auxObject[auxKey] };
+}
+
+function collectAuxiliaryArxivIds(value) {
+  const ids = new Set();
+
+  function collect(value, fieldName = '') {
+    if (Array.isArray(value)) {
+      value.forEach(item => collect(item, fieldName));
+      return;
+    }
+    if (value && typeof value === 'object') {
+      for (const [field, nestedValue] of Object.entries(value)) {
+        if (/arxiv|eprint|url|link/i.test(field)) collect(nestedValue, field);
+      }
+      return;
+    }
+    if (!/arxiv|eprint|url|link/i.test(fieldName)) return;
+    const id = normaliseArxivId(value);
+    if (id) ids.add(id);
+  }
+
+  collect(value);
+  return ids;
+}
+
+function hasAbstract(entry) {
+  return Boolean(entry && typeof entry === 'object' && (entry.abs || entry.abstract));
+}
+
 function cleanBibValue(value) {
   return String(value || '').replace(/\r?\n/g, ' ').replace(/\s+/g, ' ').trim().replace(/[{}]/g, '');
+}
+
+const LATEX_AUTHOR_ACCENTS = {
+  'á': "\\'{a}", 'Á': "\\'{A}", 'ä': '\\"{a}', 'Ä': '\\"{A}',
+  'é': "\\'{e}", 'É': "\\'{E}", 'ë': '\\"{e}', 'Ë': '\\"{E}',
+  'í': "\\'{i}", 'Í': "\\'{I}", 'ï': '\\"{i}', 'Ï': '\\"{I}',
+  'ó': "\\'{o}", 'Ó': "\\'{O}", 'ö': '\\"{o}', 'Ö': '\\"{O}',
+  'ú': "\\'{u}", 'Ú': "\\'{U}", 'ü': '\\"{u}', 'Ü': '\\"{U}',
+  'ý': "\\'{y}", 'Ý': "\\'{Y}", 'ÿ': '\\"{y}', 'Ÿ': '\\"{Y}',
+  'ñ': '\\~{n}', 'Ñ': '\\~{N}',
+  'å': '\\aa', 'Å': '\\AA', 'æ': '\\ae', 'Æ': '\\AE',
+  'œ': '\\oe', 'Œ': '\\OE', 'ø': '\\o', 'Ø': '\\O', 'ß': '\\ss'
+};
+
+function latexAuthor(value) {
+  return String(value || '')
+    .replace(/\r?\n/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .replace(/[áÁäÄéÉëËíÍïÏóÓöÖúÚüÜýÝÿŸñÑåÅæÆœŒøØß]/g, character => LATEX_AUTHOR_ACCENTS[character]);
 }
 
 function authorSurname(author) {
@@ -263,7 +326,7 @@ function bibtexFor(paper, key) {
   const lines = [
     `@misc{${key},`,
     `  title = {${cleanBibValue(paper.title)}},`,
-    `  author = {${paper.authors.map(cleanBibValue).join(' and ')}},`,
+    `  author = {${paper.authors.map(latexAuthor).join(' and ')}},`,
     `  year = ${paper.year},`,
     `  month = ${paper.month},`,
     `  url = {${paper.url}},`,
@@ -289,12 +352,9 @@ function yamlKeyPattern(key) {
   return new RegExp(`^${key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}:\\s*$`, 'm');
 }
 
-function addAbstractToAux(raw, auxObject, key, abstract) {
-  const existing = auxObject[key] || auxObject[key.toLowerCase()];
-  if (existing && (existing.abs || existing.abstract)) return raw;
-
-  if (Object.prototype.hasOwnProperty.call(auxObject, key)) {
-    const match = raw.match(yamlKeyPattern(key));
+function addAbstractToAux(raw, auxEntry, abstract) {
+  if (auxEntry) {
+    const match = raw.match(yamlKeyPattern(auxEntry.key));
     if (!match) return raw;
     const insertAt = match.index + match[0].length;
     return `${raw.slice(0, insertAt)}\n  abs: >-\n${String(abstract).split(/\r?\n/).map(line => `    ${line}`).join('\n')}${raw.slice(insertAt)}`;
@@ -344,41 +404,55 @@ async function main() {
   }
 
   console.log(`Scanning ${authorIds.size} arXiv author ID(s): ${[...authorIds.keys()].join(', ')}`);
-  const discoveredIds = new Set();
+  const discoveredPapers = new Map();
   for (const [authorId, names] of authorIds) {
     try {
-      const ids = await discoverAuthorPapers(authorId);
-      ids.forEach(id => discoveredIds.add(id));
-      console.log(`  ${authorId} (${names.join(', ')}): ${ids.length} paper(s)`);
+      const papers = await discoverAuthorPapers(authorId);
+      papers.forEach(paper => discoveredPapers.set(paper.id, paper));
+      console.log(`  ${authorId} (${names.join(', ')}): ${papers.length} recent paper(s)`);
     } catch (error) {
       console.warn(`  Could not read arXiv author page ${authorId}: ${error.message}`);
     }
-    if (REQUEST_DELAY_MS > 0) await sleep(REQUEST_DELAY_MS);
   }
 
-  if (!discoveredIds.size) {
-    console.log('No arXiv papers discovered. No files changed.');
+  if (!discoveredPapers.size) {
+    console.log('No recent arXiv papers discovered. No files changed.');
     return;
   }
 
-  let metadata;
-  try {
-    metadata = (await fetchMetadata([...discoveredIds])).filter(paper => recentPaper(paper));
-  } catch (error) {
-    console.warn(`Could not read arXiv metadata: ${error.message}`);
-    console.log('No files changed.');
-    return;
-  }
-  console.log(`Papers first posted in the last ${LOOKBACK_DAYS} day(s): ${metadata.length}`);
-  if (!metadata.length) {
-    console.log('No recent arXiv papers found. No files changed.');
-    return;
-  }
   const bibRaw = fs.existsSync(BIB_FILE) ? fs.readFileSync(BIB_FILE, 'utf8') : '';
   const auxRaw = fs.existsSync(AUX_FILE) ? fs.readFileSync(AUX_FILE, 'utf8') : '---\n';
   const auxObject = readYaml(AUX_FILE, {}) || {};
   const existing = existingBibliography(bibRaw);
-  const existingIds = new Set(existing.map(record => record.arxivId).filter(Boolean));
+  const existingIds = new Set();
+  const auxArxivIds = new Set();
+  const arxivKeyById = new Map();
+  const missingAbstractIds = new Set();
+  for (const record of existing) {
+    const auxEntry = matchingAuxiliaryEntry(auxObject, record.key);
+    const auxIds = collectAuxiliaryArxivIds(auxEntry?.value);
+    const recordIds = new Set([record.arxivId, ...auxIds].filter(Boolean));
+    recordIds.forEach(id => {
+      existingIds.add(id);
+      arxivKeyById.set(id, record.key);
+    });
+    auxIds.forEach(id => auxArxivIds.add(id));
+    if (!hasAbstract(auxEntry?.value)) recordIds.forEach(id => missingAbstractIds.add(id));
+  }
+  const candidateIds = [...discoveredPapers.keys()].filter(id => !existingIds.has(id));
+  const candidateIdSet = new Set(candidateIds);
+  const metadata = [...discoveredPapers.values()]
+    .filter(paper => candidateIdSet.has(paper.id) || missingAbstractIds.has(paper.id));
+  console.log(`Known arXiv IDs from ref.bib or matching aux.yml entries: ${existingIds.size}`);
+  console.log(`Known arXiv IDs found in matching aux.yml entries: ${auxArxivIds.size}`);
+  console.log(`New arXiv ID candidates within the Atom lookback range: ${candidateIds.length}`);
+  console.log(`Matching BibTeX records missing abstracts: ${missingAbstractIds.size}`);
+  console.log(`Recent Atom entries used for BibTeX and abstract updates: ${metadata.length}`);
+  if (!metadata.length) {
+    console.log('No eligible Atom entries require a BibTeX or abstract update. No files changed.');
+    return;
+  }
+
   const existingDois = new Set(existing.map(record => record.doi).filter(Boolean));
   const existingTitles = new Set(existing.map(record => record.title).filter(Boolean));
   const usedKeys = new Set(existing.map(record => record.key).filter(Boolean));
@@ -391,23 +465,26 @@ async function main() {
     const duplicate = existingIds.has(paper.id) ||
       (paper.doi && existingDois.has(paper.doi.toLowerCase())) ||
       existingTitles.has(normaliseTitle(paper.title));
-    let key = existing.find(record => record.arxivId === paper.id)?.key;
+    let key = arxivKeyById.get(paper.id);
 
     if (!duplicate) {
       key = citationKey(paper, usedKeys);
       newBib.push(bibtexFor(paper, key));
+      arxivKeyById.set(paper.id, key);
       existingIds.add(paper.id);
       if (paper.doi) existingDois.add(paper.doi.toLowerCase());
       existingTitles.add(normaliseTitle(paper.title));
     }
 
-    if (key && paper.abstract && !(auxObject[key] && (auxObject[key].abs || auxObject[key].abstract))) {
-      if (Object.prototype.hasOwnProperty.call(auxObject, key)) {
-        nextAux = addAbstractToAux(nextAux, auxObject, key, paper.abstract);
+    const auxEntry = key ? matchingAuxiliaryEntry(auxObject, key) : null;
+    if (key && paper.abstract && !hasAbstract(auxEntry?.value)) {
+      if (auxEntry) {
+        nextAux = addAbstractToAux(nextAux, auxEntry, paper.abstract);
       } else {
         newAuxRecords.push(yamlAbstractRecord(key, paper.abstract));
       }
-      auxObject[key] = { ...(auxObject[key] || {}), abs: paper.abstract };
+      const auxKey = auxEntry?.key || key;
+      auxObject[auxKey] = { ...(auxObject[auxKey] || {}), abs: paper.abstract };
       abstractCount += 1;
     }
   }

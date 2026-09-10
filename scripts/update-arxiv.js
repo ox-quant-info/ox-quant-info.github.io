@@ -497,6 +497,9 @@ async function main() {
   const existingByKey = new Map(existing.map(record => [record.key, record]));
   const existingIds = new Set();
   const auxArxivIds = new Set();
+  Object.values(auxObject).forEach(value => {
+    collectAuxiliaryArxivIds(value).forEach(id => auxArxivIds.add(id));
+  });
   const arxivKeyById = new Map();
   for (const record of existing) {
     const auxEntry = matchingAuxiliaryEntry(auxObject, record.key);
@@ -506,7 +509,6 @@ async function main() {
       existingIds.add(id);
       arxivKeyById.set(id, record.key);
     });
-    auxIds.forEach(id => auxArxivIds.add(id));
   }
   const candidateIds = [...discoveredPapers.values()]
     .filter(paper => newlyPublished(paper, scanNow) && !existingIds.has(paper.id))
@@ -538,7 +540,8 @@ async function main() {
       existingTitles.has(normaliseTitle(paper.title));
     let key = arxivKeyById.get(paper.id);
     const existingRecord = key ? existingByKey.get(key) : null;
-    const canUpdate = !existingRecord || existingRecord.type === 'misc';
+    const canUpdate = !auxArxivIds.has(paper.id) &&
+      (!existingRecord || existingRecord.type === 'misc');
 
     if (!duplicate && candidateIdSet.has(paper.id)) {
       key = citationKey(paper, usedKeys);

@@ -22,6 +22,7 @@ Postdoctoral Researchers:
   - name: Cameron Calcluth
     role: Postdoctoral Research Fellow (externally funded, 2026--)
     image: files/images/people/cameron.jpeg
+    arxivId: calcluth_c_1
     links:
       - icon: fa-brands fa-google-scholar
         href: https://scholar.google.com/citations?user=bhaAWzoAAAAJ
@@ -139,6 +140,7 @@ DPhil Students:
   - name: Tamás Vaszary
     role: DPhil in the Mathematical Institute (2025--); co-supervised with Prof Jon Keating
     image: files/images/people/tamas.png
+    arxivId: 00000-0001-7811-222X
     links:
       - icon: fa-brands fa-google-scholar
         href: https://scholar.google.com/citations?user=qs_SqNwAAAAJ

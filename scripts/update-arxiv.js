@@ -35,7 +35,7 @@ abstracts are prepended to aux.yml.
 
 Options:
   --dry-run   show changes without writing files
-  --scheduled enforce the 23:00 America/Toronto schedule guard
+  --scheduled enforce the 04:00 UTC schedule guard
   --help      show this message
 
 Environment:
@@ -64,24 +64,10 @@ function normaliseArxivId(value) {
 
 function arxivAuthorIds(member) {
   const ids = new Set();
-  const explicitKeys = [
-    'arxiv_id', 'arxiv_ids', 'arxivId', 'arxivIds',
-    'arxiv_author_id', 'arxiv_author_ids', 'arxivAuthorId', 'arxivAuthorIds'
-  ];
-
-  for (const key of explicitKeys) {
-    for (const value of flattenStrings(member && member[key])) {
-      const id = value.match(/^[A-Za-z0-9_-]+$/) ? value : value.match(/arxiv\.org\/a\/([^/?#]+)/i)?.[1];
-      if (id) ids.add(decodeURIComponent(id));
-    }
+  for (const value of flattenStrings(member && member['arxivId'])) {
+    const id = value.match(/^[A-Za-z0-9_-]+$/) ? value : value.match(/arxiv\.org\/a\/([^/?#]+)/i)?.[1];
+    if (id) ids.add(decodeURIComponent(id));
   }
-
-  for (const link of Array.isArray(member && member.links) ? member.links : []) {
-    const href = typeof link === 'string' ? link : link && link.href;
-    const match = String(href || '').match(/arxiv\.org\/a\/([^/?#]+)/i);
-    if (match) ids.add(decodeURIComponent(match[1]));
-  }
-
   return [...ids];
 }
 
@@ -107,14 +93,8 @@ function sleep(milliseconds) {
   return new Promise(resolve => setTimeout(resolve, milliseconds));
 }
 
-function isEasternScheduledRun(date = new Date()) {
-  const parts = Object.fromEntries(new Intl.DateTimeFormat('en-US', {
-    timeZone: 'America/Toronto',
-    weekday: 'short',
-    hour: '2-digit',
-    hourCycle: 'h23'
-  }).formatToParts(date).map(part => [part.type, part.value]));
-  return ['Sun', 'Mon', 'Tue', 'Wed', 'Thu'].includes(parts.weekday) && Number(parts.hour) === 23;
+function isUtcScheduledRun(date = new Date()) {
+  return [1, 2, 3, 4, 5].includes(date.getUTCDay()) && date.getUTCHours() === 4;
 }
 
 async function fetchText(url, options = {}, attempts = 3) {
@@ -343,8 +323,8 @@ async function main() {
     printHelp();
     return;
   }
-  if (args.has('--scheduled') && !isEasternScheduledRun()) {
-    console.log('Outside the configured 23:00 America/Toronto schedule window. No files changed.');
+  if (args.has('--scheduled') && !isUtcScheduledRun()) {
+    console.log('Outside the configured 04:00 UTC schedule window. No files changed.');
     return;
   }
   const dryRun = args.has('--dry-run');

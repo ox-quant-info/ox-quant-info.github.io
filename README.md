@@ -285,7 +285,7 @@ npm run build
 
 The updater reads each configured public arXiv author page, obtains metadata and the verbatim arXiv abstract, and considers only papers whose original arXiv posting time is within the previous three days. It prepends only new `@misc` records to `files/data/ref.bib` and matching `abs` blocks to `files/data/aux.yml`. New citation keys use `firstauthorlastnameYearFirstImportantWord`, with a numeric suffix for collisions. It is safe to run repeatedly: arXiv ID, DOI, and normalized title checks prevent duplicates. Existing abstract records are not overwritten.
 
-GitHub Actions checks on Monday, Tuesday, Wednesday, Thursday, and Sunday at 23:00 Eastern Time. Because GitHub cron uses UTC, the workflow has two UTC schedules and the script selects the matching Eastern-time run across daylight-saving changes. Scheduled or manual scans open or update a pull request containing only `ref.bib` and `aux.yml`; the normal build-and-deploy job runs when that pull request is merged into `main`. The request delay can be adjusted with the `ARXIV_REQUEST_DELAY_MS` environment variable if needed.
+GitHub Actions checks at 04:00 UTC on Monday through Friday. Scheduled or manual scans open or update a pull request containing only `ref.bib` and `aux.yml`; the normal build-and-deploy job runs when that pull request is merged into `main`. The request delay can be adjusted with the `ARXIV_REQUEST_DELAY_MS` environment variable if needed.
 
 ## Editing the HTML and styling
 

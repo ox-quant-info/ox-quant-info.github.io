@@ -2,7 +2,7 @@
 name: Bálint Koczor
 image: files/images/people/balint.webp
 role: Associate Professor in Quantum Information Theory
-arxiv_id: koczor_b_1
+arxivId: koczor_b_1
 bio: |
   I have broad research interests in quantum computing and quantum information theory, and my research aims to tackle the central question in the field that “how can we achieve a robust quantum advantage”. I co-founded the conference series Seeking Quantum Advantage (SEEQA) to provide a platform for the community to evaluate and accelerate progress around this question.
 

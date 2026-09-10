@@ -201,7 +201,8 @@ function titleCasePublicationTitle(value) {
   const title = tokens.map((token, index) => {
     if (!/\S/.test(token) || token.includes('@@MATH')) return token;
 
-    const afterBoundary = index > 0 && /[:.!?]$/.test(tokens[index - 1]);
+    const previousNonWhitespace = tokens.slice(0, index).reverse().find(candidate => /\S/.test(candidate)) || '';
+    const afterBoundary = /[:.!?]$/.test(previousNonWhitespace);
     const parts = token.split(/(-)/);
     const wordParts = parts.filter(part => part !== '-');
     let wordPartIndex = 0;

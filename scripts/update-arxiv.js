@@ -15,11 +15,14 @@ const ROOT = path.resolve(__dirname, '..');
 const DATA = path.join(ROOT, 'files', 'data');
 const BIB_FILE = path.join(DATA, 'ref.bib');
 const AUX_FILE = path.join(DATA, 'aux.yml');
-const REQUEST_DELAY_MS = Math.max(0, Number(process.env.ARXIV_REQUEST_DELAY_MS || 5000));
-const RETRY_ATTEMPTS = Math.max(1, Number(process.env.ARXIV_RETRY_ATTEMPTS || 5));
-const MAX_RETRY_DELAY_MS = Math.max(1000, Number(process.env.ARXIV_MAX_RETRY_DELAY_MS || 900000));
+const REQUEST_DELAY_MS = Math.max(0, Number(process.env.ARXIV_REQUEST_DELAY_MS || 3000));
+const MAX_RETRIES = Math.min(5, Math.max(0, Number(
+  process.env.ARXIV_MAX_RETRIES ?? process.env.ARXIV_RETRY_ATTEMPTS ?? 5
+)));
+const MAX_RETRY_DELAY_MS = Math.max(1000, Number(process.env.ARXIV_MAX_RETRY_DELAY_MS || 30000));
 const USER_AGENT = process.env.ARXIV_USER_AGENT ||
-  'ox-quant-info-site/1.0 (arXiv bibliography updater; contact: ox-quant-info@maths.ox.ac.uk)';
+  'ox-quant-info-site/1.0 (arXiv bibliography updater)';
+const RETRYABLE_STATUSES = new Set([429, 500, 502, 503, 504]);
 
 const MONTHS = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
 const KEY_STOP_WORDS = new Set([
@@ -37,15 +40,16 @@ author, and abstract fields are updated from the feed.
 
 Options:
   --dry-run   show changes without writing files
-  --scheduled enforce the 04:00 UTC schedule guard
   --help      show this message
 
 Environment:
-  ARXIV_REQUEST_DELAY_MS  delay between arXiv requests (default: 5000)
-  ARXIV_RETRY_ATTEMPTS    attempts for transient failures (default: 5)
-  ARXIV_MAX_RETRY_DELAY_MS maximum retry wait (default: 900000)
+  ARXIV_REQUEST_DELAY_MS  delay between arXiv requests (default: 3000)
+  ARXIV_MAX_RETRIES       total retries for transient failures (maximum: 5)
+  ARXIV_MAX_RETRY_DELAY_MS maximum retry wait (default: 30000)
   ARXIV_LOOKBACK_DAYS     posting-time lookback (default: 7)
-  ARXIV_USER_AGENT        user-agent sent to arXiv`);
+  ARXIV_USER_AGENT        user-agent sent to arXiv
+
+429 responses are retried at most five times.`);
 }
 
 function readYaml(filePath, fallback) {
@@ -97,10 +101,6 @@ function sleep(milliseconds) {
   return new Promise(resolve => setTimeout(resolve, milliseconds));
 }
 
-function isUtcScheduledRun(date = new Date()) {
-  return [1, 2, 3, 4, 5].includes(date.getUTCDay()) && date.getUTCHours() === 4;
-}
-
 let lastRequestAt = 0;
 
 async function waitForRequestSlot() {
@@ -117,17 +117,17 @@ function retryAfterMilliseconds(value) {
   return Number.isNaN(timestamp) ? null : Math.max(0, timestamp - Date.now());
 }
 
-async function fetchText(url, options = {}, attempts = RETRY_ATTEMPTS) {
-  let lastError;
-  for (let attempt = 1; attempt <= attempts; attempt += 1) {
+async function fetchAtom(url, maxRetries = MAX_RETRIES) {
+  let requestCount = 0;
+  let retries = 0;
+  while (true) {
+    requestCount += 1;
     try {
       await waitForRequestSlot();
       const response = await fetch(url, {
-        ...options,
         headers: {
           'User-Agent': USER_AGENT,
-          'Accept': 'application/atom+xml, text/html;q=0.9, */*;q=0.8',
-          ...(options.headers || {})
+          'Accept': 'application/atom+xml'
         }
       });
       if (!response.ok) {
@@ -138,17 +138,18 @@ async function fetchText(url, options = {}, attempts = RETRY_ATTEMPTS) {
       }
       return await response.text();
     } catch (error) {
-      lastError = error;
-      if (attempt < attempts) {
-        const retryDelay = error.status === 429
-          ? error.retryAfterMs ?? Math.min(30000 * (2 ** (attempt - 1)), MAX_RETRY_DELAY_MS)
-          : Math.min(Math.max(1000, REQUEST_DELAY_MS * attempt), 30000);
-        console.warn(`Request attempt ${attempt}/${attempts} failed for ${url}: ${error.message}; retrying in ${Math.ceil(retryDelay / 1000)}s`);
-        await sleep(Math.min(retryDelay, MAX_RETRY_DELAY_MS));
-      }
+      const isRateLimited = error.status === 429;
+      const isTransient = !error.status || RETRYABLE_STATUSES.has(error.status);
+      if (!isTransient) throw error;
+      if (retries >= maxRetries) throw error;
+      retries += 1;
+      const retryDelay = isRateLimited
+        ? error.retryAfterMs ?? Math.min(30000 * (2 ** (retries - 1)), MAX_RETRY_DELAY_MS)
+        : Math.min(Math.max(1000, REQUEST_DELAY_MS * retries), MAX_RETRY_DELAY_MS);
+      console.warn(`Request attempt ${requestCount} failed for ${url}: ${error.message}; retrying in ${Math.ceil(retryDelay / 1000)}s`);
+      await sleep(Math.min(retryDelay, MAX_RETRY_DELAY_MS));
     }
   }
-  throw lastError;
 }
 
 function decodeXml(value) {
@@ -211,7 +212,7 @@ function parseAtomEntries(xml) {
 }
 
 async function discoverAuthorPapers(authorId, now = new Date()) {
-  const atom = await fetchText(`https://arxiv.org/a/${encodeURIComponent(authorId)}.atom`);
+  const atom = await fetchAtom(`https://arxiv.org/a/${encodeURIComponent(authorId)}.atom`);
   return parseAtomEntries(atom).filter(paper => recentPaper(paper, now));
 }
 
@@ -450,10 +451,6 @@ async function main() {
   const args = new Set(process.argv.slice(2));
   if (args.has('--help') || args.has('-h')) {
     printHelp();
-    return;
-  }
-  if (args.has('--scheduled') && !isUtcScheduledRun()) {
-    console.log('Outside the configured 04:00 UTC schedule window. No files changed.');
     return;
   }
   const dryRun = args.has('--dry-run');

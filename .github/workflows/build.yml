@@ -19,6 +19,10 @@ jobs:
   update-arxiv:
     if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
+    env:
+      ARXIV_REQUEST_DELAY_MS: '3000'
+      ARXIV_MAX_RETRIES: '5'
+      ARXIV_MAX_RETRY_DELAY_MS: '30000'
 
     steps:
       - name: Checkout repository
@@ -32,14 +36,36 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Scan recent arXiv papers
-        env:
-          ARXIV_REQUEST_DELAY_MS: '3000'
-          ARXIV_MAX_RETRIES: '5'
-          ARXIV_MAX_RETRY_DELAY_MS: '30000'
-        run: npm run update:arxiv
+      - name: Scan direct arXiv updates
+        run: npm run update:arxiv -- --mode direct
 
-      - name: Open pull request for bibliography updates
+      - name: Commit author and global replacement updates to main
+        run: |
+          if git diff --quiet -- files/data/ref.bib files/data/aux.yml; then
+            echo "No author-feed or global replacement changes to commit."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add files/data/ref.bib files/data/aux.yml
+          git commit -m "chore: update arXiv publications"
+          git push origin HEAD:main
+
+      - name: Build site after direct updates
+        run: npm run build
+
+      - name: Deploy site after direct updates
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./dist
+          publish_branch: gh-pages
+          cname: ox-quant-info.uk
+
+      - name: Scan pull-request arXiv additions
+        run: npm run update:arxiv -- --mode pr
+
+      - name: Open pull request for global-feed fallback updates
         uses: peter-evans/create-pull-request@v7
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -52,9 +78,9 @@ jobs:
           commit-message: "chore: update recent arXiv publications"
           title: "chore: update recent arXiv publications"
           body: |
-            Automated scan of the configured arXiv author pages.
+            Automated fallback scan of the daily quant-ph Atom feed.
 
-            This pull request contains recent Atom-feed papers and any changed title, author, or abstract fields for newly updated arXiv versions.
+            This pull request contains new or cross-list papers that were not already represented in the local bibliography or auxiliary data.
 
   build:
     if: github.event_name == 'push'

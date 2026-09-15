@@ -15,6 +15,7 @@ const ROOT = path.resolve(__dirname, '..');
 const DATA = path.join(ROOT, 'files', 'data');
 const BIB_FILE = path.join(DATA, 'ref.bib');
 const AUX_FILE = path.join(DATA, 'aux.yml');
+const GLOBAL_FEED_URL = 'https://rss.arxiv.org/atom/quant-ph';
 const REQUEST_DELAY_MS = Math.max(0, Number(process.env.ARXIV_REQUEST_DELAY_MS || 3000));
 const MAX_RETRIES = Math.min(5, Math.max(0, Number(
   process.env.ARXIV_MAX_RETRIES ?? process.env.ARXIV_RETRY_ATTEMPTS ?? 5
@@ -23,6 +24,8 @@ const MAX_RETRY_DELAY_MS = Math.max(1000, Number(process.env.ARXIV_MAX_RETRY_DEL
 const USER_AGENT = process.env.ARXIV_USER_AGENT ||
   'ox-quant-info-site/1.0 (arXiv bibliography updater)';
 const RETRYABLE_STATUSES = new Set([429, 500, 502, 503, 504]);
+const ADDITION_ANNOUNCE_TYPES = new Set(['new', 'cross']);
+const REPLACEMENT_ANNOUNCE_TYPES = new Set(['replace', 'replace-cross']);
 
 const MONTHS = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
 const KEY_STOP_WORDS = new Set([
@@ -32,13 +35,15 @@ const KEY_STOP_WORDS = new Set([
 const LOOKBACK_DAYS = Math.max(1, Number(process.env.ARXIV_LOOKBACK_DAYS || 7));
 
 function printHelp() {
-  console.log(`Usage: node scripts/update-arxiv.js [--dry-run]
+  console.log(`Usage: node scripts/update-arxiv.js [--mode direct|pr] [--dry-run]
 
-Find recent arXiv papers listed in the author feeds configured in pi.yml and
-main_members.yml. New records are prepended to ref.bib, while changed title,
-author, and abstract fields are updated from the feed.
+The direct mode scans configured author feeds and global replacement entries.
+The pr mode scans global new and cross-list entries for a pull request.
+For author feeds, equal updated and published timestamps are treated as new
+submissions; differing timestamps are treated as replacements.
 
 Options:
+  --mode direct|pr
   --dry-run   show changes without writing files
   --help      show this message
 
@@ -46,10 +51,11 @@ Environment:
   ARXIV_REQUEST_DELAY_MS  delay between arXiv requests (default: 3000)
   ARXIV_MAX_RETRIES       total retries for transient failures (maximum: 5)
   ARXIV_MAX_RETRY_DELAY_MS maximum retry wait (default: 30000)
-  ARXIV_LOOKBACK_DAYS     posting-time lookback (default: 7)
+  ARXIV_LOOKBACK_DAYS     author-feed lookback (default: 7)
   ARXIV_USER_AGENT        user-agent sent to arXiv
 
-429 responses are retried at most five times.`);
+429 responses are retried at most five times. All transient errors share the
+same maximum retry budget per request.`);
 }
 
 function readYaml(filePath, fallback) {
@@ -95,6 +101,47 @@ function configuredMembers() {
   }
 
   return members;
+}
+
+function memberAliases(member) {
+  const aliases = flattenStrings(member?.alt_name ?? member?.alt_names);
+  return [member?.name, ...aliases].filter(Boolean);
+}
+
+function normalisePersonName(value) {
+  return String(value || '')
+    .replace(/\\[a-z]+\s*/gi, '')
+    .normalize('NFKD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim()
+    .replace(/\s+/g, ' ');
+}
+
+function memberNameMap(members) {
+  const names = new Map();
+  for (const member of members) {
+    for (const alias of memberAliases(member)) {
+      const normalized = normalisePersonName(alias);
+      if (normalized) names.set(normalized, member.name);
+    }
+  }
+  return names;
+}
+
+function matchedMemberNames(paper, names) {
+  return paper.authors
+    .map(author => names.get(normalisePersonName(author)))
+    .filter(Boolean);
+}
+
+function logMatchedEntries(label, papers) {
+  if (!papers.length) return;
+  console.log(`${label}:`);
+  for (const paper of papers) {
+    console.log(`  ${paper.id} [${paper.announceType}] ${paper.authors.join(', ')} — ${paper.title}`);
+  }
 }
 
 function sleep(milliseconds) {
@@ -169,9 +216,23 @@ function xmlText(block, tag) {
   return match ? decodeXml(match[1]).trim() : '';
 }
 
-function xmlAttribute(block, tag, attribute) {
-  const match = block.match(new RegExp(`<${tag}\\b[^>]*\\b${attribute}=["']([^"']+)["']`, 'i'));
-  return match ? decodeXml(match[1]).trim() : '';
+function atomAuthors(block) {
+  const authors = [];
+  for (const match of block.matchAll(/<author(?:\s[^>]*)?>[\s\S]*?<name>([\s\S]*?)<\/name>[\s\S]*?<\/author>/gi)) {
+    const author = decodeXml(match[1]).replace(/\s+/g, ' ').trim();
+    if (author) authors.push(author);
+  }
+  if (authors.length) return authors;
+  return xmlText(block, 'dc:creator')
+    .split(/\s*,\s*/)
+    .map(author => author.replace(/\s+/g, ' ').trim())
+    .filter(Boolean);
+}
+
+function atomAbstract(block) {
+  const summary = xmlText(block, 'summary').replace(/\s+/g, ' ').trim();
+  const abstract = summary.match(/\bAbstract:\s*([\s\S]*)$/i);
+  return abstract ? abstract[1].trim() : summary;
 }
 
 function parseAtomEntries(xml) {
@@ -180,11 +241,7 @@ function parseAtomEntries(xml) {
     const id = normaliseArxivId(xmlText(block, 'id'));
     if (!id) continue;
 
-    const authors = [];
-    for (const match of block.matchAll(/<author(?:\s[^>]*)?>[\s\S]*?<name>([\s\S]*?)<\/name>[\s\S]*?<\/author>/gi)) {
-      const author = decodeXml(match[1]).replace(/\s+/g, ' ').trim();
-      if (author) authors.push(author);
-    }
+    const authors = atomAuthors(block);
 
     const published = xmlText(block, 'published');
     const updated = xmlText(block, 'updated');
@@ -197,8 +254,9 @@ function parseAtomEntries(xml) {
     entries.push({
       id,
       title: xmlText(block, 'title').replace(/\s+/g, ' ').trim(),
-      abstract: xmlText(block, 'summary').replace(/\s+/g, ' ').trim(),
+      abstract: atomAbstract(block),
       authors,
+      announceType: (xmlText(block, 'arxiv:announce_type') || 'new').toLowerCase(),
       publishedAt: Number.isNaN(publishedDate.getTime()) ? null : publishedDate,
       updatedAt: Number.isNaN(updatedDate.getTime()) ? null : updatedDate,
       year: Number.isNaN(publishedDate.getTime()) ? new Date().getUTCFullYear() : publishedDate.getUTCFullYear(),
@@ -211,9 +269,13 @@ function parseAtomEntries(xml) {
   return entries;
 }
 
-async function discoverAuthorPapers(authorId, now = new Date()) {
+async function discoverAuthorFeed(authorId, now = new Date()) {
   const atom = await fetchAtom(`https://arxiv.org/a/${encodeURIComponent(authorId)}.atom`);
-  return parseAtomEntries(atom).filter(paper => recentPaper(paper, now));
+  const papers = parseAtomEntries(atom);
+  return {
+    papers,
+    recent: papers.filter(paper => recentPaper(paper, now))
+  };
 }
 
 function bibTags(entry) {
@@ -447,46 +509,13 @@ function newlyPublished(paper, now = new Date()) {
   return inLookback(paper.publishedAt, now);
 }
 
-async function main() {
-  const args = new Set(process.argv.slice(2));
-  if (args.has('--help') || args.has('-h')) {
-    printHelp();
-    return;
-  }
-  const dryRun = args.has('--dry-run');
-  const scanNow = new Date();
-  const members = configuredMembers();
-  const authorIds = new Map();
+function isNewSubmission(paper) {
+  return paper.updatedAt instanceof Date && !Number.isNaN(paper.updatedAt.getTime()) &&
+    paper.publishedAt instanceof Date && !Number.isNaN(paper.publishedAt.getTime()) &&
+    paper.updatedAt.getTime() === paper.publishedAt.getTime();
+}
 
-  for (const member of members) {
-    for (const id of arxivAuthorIds(member)) {
-      if (!authorIds.has(id)) authorIds.set(id, []);
-      authorIds.get(id).push(member.name);
-    }
-  }
-
-  if (!authorIds.size) {
-    console.log('No arXiv author IDs found in pi.yml or main_members.yml.');
-    return;
-  }
-
-  console.log(`Scanning ${authorIds.size} arXiv author ID(s): ${[...authorIds.keys()].join(', ')}`);
-  const discoveredPapers = new Map();
-  for (const [authorId, names] of authorIds) {
-    try {
-      const papers = await discoverAuthorPapers(authorId, scanNow);
-      papers.forEach(paper => discoveredPapers.set(paper.id, paper));
-      console.log(`  ${authorId} (${names.join(', ')}): ${papers.length} recent paper(s)`);
-    } catch (error) {
-      console.warn(`  Could not read arXiv author page ${authorId}: ${error.message}`);
-    }
-  }
-
-  if (!discoveredPapers.size) {
-    console.log('No recent arXiv papers discovered. No files changed.');
-    return;
-  }
-
+function loadMergeState() {
   const bibRaw = fs.existsSync(BIB_FILE) ? fs.readFileSync(BIB_FILE, 'utf8') : '';
   const auxRaw = fs.existsSync(AUX_FILE) ? fs.readFileSync(AUX_FILE, 'utf8') : '---\n';
   const auxObject = readYaml(AUX_FILE, {}) || {};
@@ -498,6 +527,7 @@ async function main() {
     collectAuxiliaryArxivIds(value).forEach(id => auxArxivIds.add(id));
   });
   const arxivKeyById = new Map();
+
   for (const record of existing) {
     const auxEntry = matchingAuxiliaryEntry(auxObject, record.key);
     const auxIds = collectAuxiliaryArxivIds(auxEntry?.value);
@@ -507,82 +537,213 @@ async function main() {
       arxivKeyById.set(id, record.key);
     });
   }
-  const candidateIds = [...discoveredPapers.values()]
-    .filter(paper => newlyPublished(paper, scanNow) && !existingIds.has(paper.id))
-    .map(paper => paper.id);
-  const candidateIdSet = new Set(candidateIds);
-  const metadata = [...discoveredPapers.values()];
-  console.log(`Known arXiv IDs from ref.bib or matching aux.yml entries: ${existingIds.size}`);
-  console.log(`Known arXiv IDs found in matching aux.yml entries: ${auxArxivIds.size}`);
-  console.log(`New arXiv ID candidates within the Atom lookback range: ${candidateIds.length}`);
-  console.log(`Recent Atom entries available for BibTeX and abstract updates: ${metadata.length}`);
-  if (!metadata.length) {
-    console.log('No eligible Atom entries require a BibTeX or abstract update. No files changed.');
-    return;
+
+  return {
+    bibRaw,
+    auxRaw,
+    auxObject,
+    existing,
+    existingByKey,
+    existingIds,
+    auxArxivIds,
+    arxivKeyById,
+    existingDois: new Set(existing.map(record => record.doi).filter(Boolean)),
+    existingTitles: new Set(existing.map(record => record.title).filter(Boolean)),
+    usedKeys: new Set(existing.map(record => record.key).filter(Boolean)),
+    newBib: [],
+    newAuxRecords: [],
+    nextBib: bibRaw,
+    nextAux: auxRaw,
+    abstractCount: 0,
+    bibMetadataCount: 0
+  };
+}
+
+function paperIsDuplicate(state, paper) {
+  return state.existingIds.has(paper.id) ||
+    state.auxArxivIds.has(paper.id) ||
+    (paper.doi && state.existingDois.has(paper.doi.toLowerCase())) ||
+    state.existingTitles.has(normaliseTitle(paper.title));
+}
+
+function paperCanUpdate(state, paper, key) {
+  const existingRecord = key ? state.existingByKey.get(key) : null;
+  return Boolean(existingRecord && existingRecord.type === 'misc');
+}
+
+function mergePaper(state, paper, {
+  allowNew = false,
+  allowUpdate = false,
+  addMissingAbstract = false
+} = {}) {
+  const duplicate = paperIsDuplicate(state, paper);
+  let key = state.arxivKeyById.get(paper.id);
+  let added = false;
+  let eligibleUpdate = false;
+
+  if (allowNew && !duplicate) {
+    key = citationKey(paper, state.usedKeys);
+    state.newBib.push(bibtexFor(paper, key));
+    state.arxivKeyById.set(paper.id, key);
+    state.existingIds.add(paper.id);
+    if (paper.doi) state.existingDois.add(paper.doi.toLowerCase());
+    state.existingTitles.add(normaliseTitle(paper.title));
+    added = true;
+  } else if (allowUpdate && key && paperCanUpdate(state, paper, key)) {
+    eligibleUpdate = true;
+    const updatedBib = updateBibMetadata(state.nextBib, key, paper);
+    if (updatedBib !== state.nextBib) {
+      state.nextBib = updatedBib;
+      state.bibMetadataCount += 1;
+    }
   }
 
-  const existingDois = new Set(existing.map(record => record.doi).filter(Boolean));
-  const existingTitles = new Set(existing.map(record => record.title).filter(Boolean));
-  const usedKeys = new Set(existing.map(record => record.key).filter(Boolean));
-  const newBib = [];
-  let nextBib = bibRaw;
-  let nextAux = auxRaw;
-  const newAuxRecords = [];
-  let abstractCount = 0;
-  let bibMetadataCount = 0;
+  const auxEntry = matchingAuxiliaryEntry(state.auxObject, key);
+  const storedAbstract = auxEntry?.value?.abs || auxEntry?.value?.abstract || '';
+  const abstractDiffers = normalizeAbstract(storedAbstract) !== normalizeAbstract(paper.abstract);
+  const shouldAddAbstract = added || (addMissingAbstract && !storedAbstract);
+  const shouldUpdateAbstract = eligibleUpdate && abstractDiffers;
+  if (!key || !paper.abstract || (!shouldAddAbstract && !shouldUpdateAbstract)) return;
 
-  for (const paper of metadata.sort((a, b) => b.year - a.year || b.id.localeCompare(a.id))) {
-    const duplicate = existingIds.has(paper.id) ||
-      (paper.doi && existingDois.has(paper.doi.toLowerCase())) ||
-      existingTitles.has(normaliseTitle(paper.title));
-    let key = arxivKeyById.get(paper.id);
-    const existingRecord = key ? existingByKey.get(key) : null;
-    const canUpdate = !auxArxivIds.has(paper.id) &&
-      (!existingRecord || existingRecord.type === 'misc');
-
-    if (!duplicate && candidateIdSet.has(paper.id)) {
-      key = citationKey(paper, usedKeys);
-      newBib.push(bibtexFor(paper, key));
-      arxivKeyById.set(paper.id, key);
-      existingIds.add(paper.id);
-      if (paper.doi) existingDois.add(paper.doi.toLowerCase());
-      existingTitles.add(normaliseTitle(paper.title));
-    } else if (key && canUpdate) {
-      const updatedBib = updateBibMetadata(nextBib, key, paper);
-      if (updatedBib !== nextBib) {
-        nextBib = updatedBib;
-        bibMetadataCount += 1;
-      }
-    }
-
-    const auxEntry = key ? matchingAuxiliaryEntry(auxObject, key) : null;
-    const storedAbstract = auxEntry?.value?.abs || auxEntry?.value?.abstract || '';
-    if (key && canUpdate && paper.abstract && normalizeAbstract(storedAbstract) !== normalizeAbstract(paper.abstract)) {
-      if (auxEntry) {
-        nextAux = setAbstractInAux(nextAux, auxEntry, paper.abstract);
-      } else {
-        newAuxRecords.push(yamlAbstractRecord(key, paper.abstract));
-      }
-      const auxKey = auxEntry?.key || key;
-      auxObject[auxKey] = { ...(auxObject[auxKey] || {}), abs: paper.abstract };
-      abstractCount += 1;
-    }
+  if (auxEntry) {
+    state.nextAux = setAbstractInAux(state.nextAux, auxEntry, paper.abstract);
+  } else {
+    state.newAuxRecords.push(yamlAbstractRecord(key, paper.abstract));
   }
+  const auxKey = auxEntry?.key || key;
+  state.auxObject[auxKey] = { ...(state.auxObject[auxKey] || {}), abs: paper.abstract };
+  state.abstractCount += 1;
+}
 
-  nextAux = prependAuxRecords(nextAux, newAuxRecords);
+function finalizeMergeState(state) {
+  state.nextAux = prependAuxRecords(state.nextAux, state.newAuxRecords);
+  if (state.newBib.length) {
+    state.nextBib = `${state.newBib.join('\n')}\n${state.nextBib.trimStart()}`.trimEnd();
+  }
+  return state;
+}
 
-  console.log(`New bibliography records: ${newBib.length}`);
-  console.log(`BibTeX metadata records updated: ${bibMetadataCount}`);
-  console.log(`Abstract records added or updated: ${abstractCount}`);
+function writeMergeState(state, dryRun, label) {
+  finalizeMergeState(state);
+  console.log(`${label} new bibliography records: ${state.newBib.length}`);
+  console.log(`${label} BibTeX metadata records updated: ${state.bibMetadataCount}`);
+  console.log(`${label} abstract records added or updated: ${state.abstractCount}`);
+
   if (dryRun) {
-    if (newBib.length) console.log(`\n${newBib.join('\n\n')}`);
-    if (abstractCount) console.log('\n(dry run: aux.yml changes are not written)');
+    if (state.newBib.length) console.log(`\n${state.newBib.join('\n\n')}`);
     return;
   }
 
-  if (newBib.length) nextBib = `${newBib.join('\n')}\n${nextBib.trimStart()}`.trimEnd();
-  if (nextBib !== bibRaw) fs.writeFileSync(BIB_FILE, nextBib);
-  if (nextAux !== auxRaw) fs.writeFileSync(AUX_FILE, nextAux.trimEnd());
+  if (state.nextBib !== state.bibRaw) fs.writeFileSync(BIB_FILE, state.nextBib);
+  if (state.nextAux !== state.auxRaw) fs.writeFileSync(AUX_FILE, state.nextAux.trimEnd());
+}
+
+async function scanAuthorFeeds(authorIds, now) {
+  const recentPapers = new Map();
+
+  console.log(`Scanning ${authorIds.size} arXiv author ID(s): ${[...authorIds.keys()].join(', ') || 'none'}`);
+  for (const [authorId, names] of authorIds) {
+    try {
+      const feed = await discoverAuthorFeed(authorId, now);
+      feed.recent.forEach(paper => recentPapers.set(paper.id, paper));
+      console.log(`  ${authorId} (${names.join(', ')}): ${feed.recent.length} recent paper(s)`);
+    } catch (error) {
+      console.warn(`  Could not read arXiv author page ${authorId}: ${error.message}`);
+    }
+  }
+
+  return { recentPapers };
+}
+
+async function scanGlobalFeed(members, state) {
+  const atom = await fetchAtom(GLOBAL_FEED_URL);
+  const papers = parseAtomEntries(atom);
+  const names = memberNameMap(members);
+  const matched = papers.filter(paper => {
+    if (REPLACEMENT_ANNOUNCE_TYPES.has(paper.announceType)) {
+      return state.existingIds.has(paper.id);
+    }
+    return ADDITION_ANNOUNCE_TYPES.has(paper.announceType) &&
+      matchedMemberNames(paper, names).length > 0 &&
+      !paperIsDuplicate(state, paper);
+  });
+  return { papers, matched };
+}
+
+function cliOption(argumentsList, name, fallback) {
+  const equalsArgument = argumentsList.find(argument => argument.startsWith(`${name}=`));
+  if (equalsArgument) return equalsArgument.slice(name.length + 1);
+  const optionIndex = argumentsList.indexOf(name);
+  return optionIndex === -1 ? fallback : argumentsList[optionIndex + 1];
+}
+
+async function main() {
+  const argumentsList = process.argv.slice(2);
+  const args = new Set(argumentsList);
+  if (args.has('--help') || args.has('-h')) {
+    printHelp();
+    return;
+  }
+
+  const mode = String(cliOption(argumentsList, '--mode', 'direct') || '').toLowerCase();
+  if (!['direct', 'pr'].includes(mode)) {
+    throw new Error(`Unknown mode: ${mode}. Use --mode=direct or --mode=pr.`);
+  }
+
+  const dryRun = args.has('--dry-run');
+  const scanNow = new Date();
+  const members = configuredMembers();
+  const state = loadMergeState();
+
+  if (mode === 'direct') {
+    const authorIds = new Map();
+    for (const member of members) {
+      for (const id of arxivAuthorIds(member)) {
+        if (!authorIds.has(id)) authorIds.set(id, []);
+        authorIds.get(id).push(member.name);
+      }
+    }
+
+    const scan = await scanAuthorFeeds(authorIds, scanNow);
+    const papers = [...scan.recentPapers.values()];
+    for (const paper of papers.sort((a, b) => b.year - a.year || b.id.localeCompare(a.id))) {
+      const newSubmission = isNewSubmission(paper);
+      mergePaper(state, paper, {
+        allowNew: newSubmission && newlyPublished(paper, scanNow),
+        allowUpdate: !newSubmission,
+        addMissingAbstract: newSubmission
+      });
+    }
+    const global = await scanGlobalFeed(members, state);
+    const replacements = global.matched.filter(paper => REPLACEMENT_ANNOUNCE_TYPES.has(paper.announceType));
+    console.log(`Direct author-feed entries in lookback: ${papers.length}`);
+    console.log(`Global quant-ph feed entries: ${global.papers.length}`);
+    console.log(`Global replacement entries selected for direct update: ${replacements.length}`);
+    for (const paper of replacements) mergePaper(state, paper, { allowUpdate: true });
+    if (!papers.length && !replacements.length) {
+      console.log('No direct arXiv changes require processing. No files changed.');
+      return;
+    }
+    writeMergeState(state, dryRun, 'Direct arXiv');
+    return;
+  }
+
+  const global = await scanGlobalFeed(members, state);
+  const matchedPapers = global.matched
+    .filter(paper => ADDITION_ANNOUNCE_TYPES.has(paper.announceType))
+    .sort((a, b) => b.year - a.year || b.id.localeCompare(a.id));
+  console.log(`Global quant-ph feed entries: ${global.papers.length}`);
+  console.log(`Global new/cross entries selected for pull request: ${matchedPapers.length}`);
+  if (!matchedPapers.length) {
+    console.log('No global additions require a pull request. No files changed.');
+    return;
+  }
+
+  logMatchedEntries('Matched pull-request entries', matchedPapers);
+  for (const paper of matchedPapers) {
+    mergePaper(state, paper, { allowNew: true });
+  }
+  writeMergeState(state, dryRun, 'Pull-request arXiv');
 }
 
 main().catch(error => {

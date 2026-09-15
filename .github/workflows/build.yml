@@ -26,10 +26,10 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: '24'
 
@@ -40,16 +40,14 @@ jobs:
         run: npm run update:arxiv -- --mode direct
 
       - name: Commit author and global replacement updates to main
-        run: |
-          if git diff --quiet -- files/data/ref.bib files/data/aux.yml; then
-            echo "No author-feed or global replacement changes to commit."
-            exit 0
-          fi
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add files/data/ref.bib files/data/aux.yml
-          git commit -m "chore: update arXiv publications"
-          git push origin HEAD:main
+        uses: stefanzweifel/git-auto-commit-action@v7
+        with:
+          commit_message: "chore: update arXiv publications"
+          file_pattern: files/data/ref.bib files/data/aux.yml
+          branch: main
+          commit_user_name: "github-actions[bot]"
+          commit_user_email: "41898282+github-actions[bot]@users.noreply.github.com"
+          commit_author: "github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>"
 
       - name: Build site after direct updates
         run: npm run build
@@ -66,7 +64,7 @@ jobs:
         run: npm run update:arxiv -- --mode pr
 
       - name: Open pull request for global-feed fallback updates
-        uses: peter-evans/create-pull-request@v7
+        uses: peter-evans/create-pull-request@v8
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           base: main
@@ -88,10 +86,10 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: '24'
 

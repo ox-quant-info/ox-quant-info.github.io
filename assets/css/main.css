@@ -680,7 +680,7 @@ section,
   .hero:after {
     position: absolute;
     content: "";
-    width: 57%;
+    width: 50%;
     background: var(--image-panel-color);
     top: 0;
     bottom: 0;
@@ -714,7 +714,7 @@ section,
 
 .hero h1 {
   margin: 0;
-  font-size: 3rem;
+  font-size: 2.7rem;
   font-weight: 700;
 }
 
@@ -851,7 +851,7 @@ section,
 }
 
 .why-us .swiper {
-  margin: 40px 120px 30px;
+  margin: 50px 100px 30px;
   overflow: hidden;
 }
 
@@ -870,11 +870,11 @@ section,
 }
 
 .why-us .swiper-button-prev {
-  left: 80px;
+  left: 50px;
 }
 
 .why-us .swiper-button-next {
-  right: 80px;
+  right: 50px;
 }
 
 .why-us .swiper-pagination {
@@ -896,7 +896,7 @@ section,
   }
 
   .why-us .swiper {
-    margin: 25px 60px 18px;
+    margin: 40px 50px 30px;
   }
 
   .why-us .swiper-button-prev,
@@ -911,7 +911,7 @@ section,
   }
 
   .why-us .swiper {
-    margin: 18px 25px 10px;
+    margin: 40px 25px 30px;
   }
 
   .why-us .swiper-slide .item {

@@ -42,8 +42,11 @@ Postdoctoral Researchers:
     alt_name:
       - Y. Zhang
     role: Postdoctoral Research Associate (2026--)
-    image: files/images/people/guy.jpg
+    image: files/images/people/yukun.png
+    arXivId: zhang_y_64
     links:
+      - icon: fa-brands fa-orcid
+        href: https://orcid.org/0009-0004-1934-2665
       - icon: fa-solid fa-building-columns
         href: https://www.maths.ox.ac.uk/people/yukun.zhang
 
@@ -101,8 +104,9 @@ DPhil Students:
       - Z. Sun
     role: DPhil in the Department of Materials (2023--); co-supervised with Prof Simon Benjamin
     image: files/images/people/guy.jpg
-  - name: Po-Wei Huang
+  - name: Po-Wei "George" Huang
     alt_name:
+      - Po-Wei Huang
       - P.-W. Huang
     image: files/images/people/george.jpg
     role: DPhil in the Mathematical Institute (2024--); co-supervised with Prof Simon Benjamin and Prof Artur Ekert

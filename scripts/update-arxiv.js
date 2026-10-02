@@ -235,6 +235,24 @@ function atomAbstract(block) {
   return abstract ? abstract[1].trim() : summary;
 }
 
+function arxivMonthDate(id) {
+  const match = String(id).match(/^(\d{2})(\d{2})\.\d{4,5}$/);
+  if (!match) return null;
+  const year = 2000 + Number(match[1]);
+  const month = Number(match[2]);
+  return month >= 1 && month <= 12 ? new Date(Date.UTC(year, month - 1, 1)) : null;
+}
+
+function earlierEntryDate(publishedDate, arxivId) {
+  const arxivDate = arxivMonthDate(arxivId);
+  if (!Number.isNaN(publishedDate.getTime())) {
+    if (!arxivDate) return publishedDate;
+    const publishedMonth = Date.UTC(publishedDate.getUTCFullYear(), publishedDate.getUTCMonth(), 1);
+    return arxivDate.getTime() < publishedMonth ? arxivDate : publishedDate;
+  }
+  return arxivDate || new Date(Date.UTC(new Date().getUTCFullYear(), 0, 1));
+}
+
 function parseAtomEntries(xml) {
   const entries = [];
   for (const block of xml.match(/<entry(?:\s[^>]*)?>[\s\S]*?<\/entry>/gi) || []) {
@@ -247,6 +265,7 @@ function parseAtomEntries(xml) {
     const updated = xmlText(block, 'updated');
     const publishedDate = new Date(published);
     const updatedDate = new Date(updated);
+    const entryDate = earlierEntryDate(publishedDate, id);
     const categories = [...block.matchAll(/<category\b[^>]*\bterm=["']([^"']+)["']/gi)]
       .map(match => decodeXml(match[1]).trim()).filter(Boolean);
     const doi = xmlText(block, 'arxiv:doi') || xmlText(block, 'doi');
@@ -259,8 +278,8 @@ function parseAtomEntries(xml) {
       announceType: (xmlText(block, 'arxiv:announce_type') || 'new').toLowerCase(),
       publishedAt: Number.isNaN(publishedDate.getTime()) ? null : publishedDate,
       updatedAt: Number.isNaN(updatedDate.getTime()) ? null : updatedDate,
-      year: Number.isNaN(publishedDate.getTime()) ? new Date().getUTCFullYear() : publishedDate.getUTCFullYear(),
-      month: Number.isNaN(publishedDate.getTime()) ? 'jan' : MONTHS[publishedDate.getUTCMonth()],
+      year: entryDate.getUTCFullYear(),
+      month: MONTHS[entryDate.getUTCMonth()],
       primaryClass: categories[0] || '',
       doi: doi.replace(/^https?:\/\/doi\.org\//i, '').trim(),
       url: `https://arxiv.org/abs/${id}`

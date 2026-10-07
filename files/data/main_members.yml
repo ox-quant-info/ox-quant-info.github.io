@@ -84,7 +84,14 @@ Affiliates:
     links:
       - icon: fa-brands fa-google-scholar
         href: https://scholar.google.com/citations?user=n_yWG2AAAAAJ
-
+  - name: Keisuke Murota
+    alt_name:
+      - K. Murota
+    image: files/images/people/keisuke.jpg 
+    role: University of Tokyo Academic Visitor (2026)
+    links:
+      - icon: fa-brands fa-google-scholar
+        href: https://scholar.google.com/citations?user=lHaPRyIAAAAJ
 DPhil Students:
   - name: Tenzan Araki
     alt_name:

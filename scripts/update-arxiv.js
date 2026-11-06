@@ -108,9 +108,20 @@ function memberAliases(member) {
   return [member?.name, ...aliases].filter(Boolean);
 }
 
+
 function normalisePersonName(value) {
-  return String(value || '')
-    .replace(/\\[a-z]+\s*/gi, '')
+  let name = String(value || '');
+
+  // Reverse the existing Unicode-to-LaTeX accent mapping.
+  for (const [unicode, latex] of Object.entries(LATEX_AUTHOR_ACCENTS)) {
+    name = name.split(latex).join(unicode);
+
+    // Also handle accents without braces: \'e, \"o
+    const unbraced = latex.replace(/\{([A-Za-z])\}/, '$1');
+    name = name.split(unbraced).join(unicode);
+  }
+
+  return name
     .normalize('NFKD')
     .replace(/[\u0300-\u036f]/g, '')
     .toLowerCase()
@@ -118,6 +129,7 @@ function normalisePersonName(value) {
     .trim()
     .replace(/\s+/g, ' ');
 }
+
 
 function memberNameMap(members) {
   const names = new Map();

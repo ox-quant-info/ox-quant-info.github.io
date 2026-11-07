@@ -128,6 +128,20 @@ function normalizeText(value) {
     text = text.split(needle).join(replacement);
   });
 
+  const combiningMarks = {
+    "'": '\u0301',
+    '"': '\u0308',
+    '`': '\u0300',
+    '^': '\u0302',
+    '~': '\u0303',
+    '=': '\u0304',
+    '.': '\u0307',
+  };
+  text = text.replace(/\\(["'`^~=.])\{?([A-Za-z])\}?/g, (match, accent, letter) => {
+    const mark = combiningMarks[accent];
+    return mark ? `${letter}${mark}`.normalize('NFC') : letter;
+  });
+
   const replacements = [
     [/\\textendash/g, '–'],
     [/\\textemdash/g, '—'],
@@ -136,7 +150,6 @@ function normalizeText(value) {
     [/\\%/g, '%'],
     [/\\_/g, '_'],
     [/\\#/g, '#'],
-    [/\\(["'`^~=.])\{?([A-Za-z])\}?/g, '$2'],
     [/\\aa\b/g, 'å'],
     [/\\AA\b/g, 'Å'],
     [/\\ae\b/g, 'æ'],
